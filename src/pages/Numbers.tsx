@@ -1,0 +1,150 @@
+import { useEffect, useMemo, useState } from "react";
+import { Plus, RotateCcw, Trash2, Upload } from "lucide-react";
+import { api } from "@/lib/api";
+import PageHeader from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+
+const statusPill: Record<string, string> = {
+  available: "pill-green",
+  reserved: "pill-yellow",
+  used: "pill-neutral",
+  disabled: "pill-red",
+};
+
+export default function Numbers() {
+  const [list, setList] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
+  const [filter, setFilter] = useState<{ service_id?: number; country_id?: number; status?: string }>({});
+  const [single, setSingle] = useState({ msisdn: "", service_id: 0, country_id: 0, status: "available" });
+  const [bulk, setBulk] = useState({ msisdns: "", service_id: 0, country_id: 0 });
+
+  const load = () => api.numbers.list(filter).then(setList).catch((e) => toast.error(e.message));
+  useEffect(() => { api.services.list().then(setServices); api.countries.list().then(setCountries); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [JSON.stringify(filter)]);
+
+  const addOne = async () => {
+    if (!single.msisdn || !single.service_id || !single.country_id) return toast.error("Fill all fields");
+    try { await api.numbers.create(single); setSingle({ ...single, msisdn: "" }); load(); toast.success("Number added"); }
+    catch (e: any) { toast.error(e.message); }
+  };
+  const addBulk = async () => {
+    if (!bulk.service_id || !bulk.country_id) return toast.error("Pick service + country");
+    const arr = bulk.msisdns.split(/[\s,;]+/).filter(Boolean);
+    if (!arr.length) return toast.error("Paste numbers");
+    try {
+      const r = await api.numbers.bulk({ msisdns: arr, service_id: bulk.service_id, country_id: bulk.country_id });
+      toast.success(`Inserted ${r.inserted} of ${r.submitted}`);
+      setBulk({ ...bulk, msisdns: "" }); load();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const counts = useMemo(() => {
+    const c = { available: 0, reserved: 0, used: 0, disabled: 0 } as Record<string, number>;
+    list.forEach((n) => { c[n.status] = (c[n.status] || 0) + 1; });
+    return c;
+  }, [list]);
+
+  return (
+    <>
+      <PageHeader title="Numbers" subtitle="Manually managed pool. Bot picks an available number when a user requests." />
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <div className="glass-card p-5">
+          <h3 className="mb-3 font-display text-base font-semibold">Add single number</h3>
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+            <Input placeholder="393406647354" value={single.msisdn} onChange={(e) => setSingle({ ...single, msisdn: e.target.value })} />
+            <Select value={String(single.service_id)} onValueChange={(v) => setSingle({ ...single, service_id: +v })}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Service" /></SelectTrigger>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={String(single.country_id)} onValueChange={(v) => setSingle({ ...single, country_id: +v })}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Country" /></SelectTrigger>
+              <SelectContent>{countries.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.flag} {c.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Button onClick={addOne} className="bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
+          </div>
+        </div>
+
+        <div className="glass-card p-5">
+          <h3 className="mb-3 font-display text-base font-semibold">Bulk add (one per line)</h3>
+          <div className="flex gap-3">
+            <Select value={String(bulk.service_id)} onValueChange={(v) => setBulk({ ...bulk, service_id: +v })}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Service" /></SelectTrigger>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={String(bulk.country_id)} onValueChange={(v) => setBulk({ ...bulk, country_id: +v })}>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Country" /></SelectTrigger>
+              <SelectContent>{countries.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.flag} {c.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <Textarea rows={4} className="mt-3 font-mono text-xs" placeholder={"393406647354\n393925068153\n…"} value={bulk.msisdns} onChange={(e) => setBulk({ ...bulk, msisdns: e.target.value })} />
+          <Button onClick={addBulk} className="mt-3 bg-gradient-primary text-primary-foreground"><Upload className="mr-1 h-4 w-4" /> Bulk insert</Button>
+        </div>
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <Select value={filter.service_id ? String(filter.service_id) : "all"} onValueChange={(v) => setFilter({ ...filter, service_id: v === "all" ? undefined : +v })}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All services" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All services</SelectItem>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={filter.country_id ? String(filter.country_id) : "all"} onValueChange={(v) => setFilter({ ...filter, country_id: v === "all" ? undefined : +v })}>
+            <SelectTrigger className="w-44"><SelectValue placeholder="All countries" /></SelectTrigger>
+            <SelectContent><SelectItem value="all">All countries</SelectItem>{countries.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.flag} {c.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={filter.status ?? "all"} onValueChange={(v) => setFilter({ ...filter, status: v === "all" ? undefined : v })}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="All status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="reserved">Reserved</SelectItem>
+              <SelectItem value="used">Used</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-2 text-xs">
+          <span className="pill-green">{counts.available || 0} available</span>
+          <span className="pill-yellow">{counts.reserved || 0} reserved</span>
+          <span className="pill-neutral">{counts.used || 0} used</span>
+          <span className="pill-red">{counts.disabled || 0} disabled</span>
+        </div>
+      </div>
+
+      <div className="glass-card overflow-hidden p-0">
+        <table className="data-table">
+          <thead><tr><th>ID</th><th>MSISDN</th><th>Service</th><th>Country</th><th>Status</th><th>Last OTP</th><th></th></tr></thead>
+          <tbody>
+            {list.map((n) => (
+              <tr key={n.id}>
+                <td className="text-muted-foreground">#{n.id}</td>
+                <td><span className="code-pill">+{n.msisdn}</span></td>
+                <td>{n.service_emoji} {n.service_name}</td>
+                <td><span className="mr-1 text-lg">{n.country_flag}</span>{n.country_name}</td>
+                <td><span className={statusPill[n.status] || "pill-neutral"}>{n.status}</span></td>
+                <td className="text-muted-foreground">{n.last_otp_at ? new Date(n.last_otp_at).toLocaleString() : "—"}</td>
+                <td className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="secondary" onClick={async () => { await api.numbers.update(n.id, { ...n, status: "available" }); load(); }}>
+                      <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={async () => { if (confirm("Delete?")) { await api.numbers.remove(n.id); load(); } }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {list.length === 0 && (<tr><td colSpan={7} className="py-10 text-center text-muted-foreground">No numbers found.</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
