@@ -15,11 +15,15 @@ class CountryIn(BaseModel):
     code: str
     iso: str = ""
     flag: str = "🌍"
+    custom_emoji_id: str | None = None
     enabled: bool = True
 
 
 def _d(c: Country):
-    return {"id": c.id, "name": c.name, "code": c.code, "iso": c.iso, "flag": c.flag, "enabled": c.enabled}
+    return {
+        "id": c.id, "name": c.name, "code": c.code, "iso": c.iso,
+        "flag": c.flag, "custom_emoji_id": c.custom_emoji_id, "enabled": c.enabled,
+    }
 
 
 @router.get("")
