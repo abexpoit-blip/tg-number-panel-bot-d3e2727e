@@ -31,6 +31,28 @@ docker compose logs -f api bot
 
 The host nginx (or any reverse proxy) should forward `tg.nexus-x.site` → `127.0.0.1:8088`.
 
+Use this as the host `/etc/nginx/sites-available/tg.nexus-x.site` file. Do not paste only a `location` block into `/etc/nginx/sites-enabled/default`; `location` must be inside `server { ... }`.
+
+```nginx
+server {
+    listen 80;
+    server_name tg.nexus-x.site;
+
+    client_max_body_size 10m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8088;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Then run `nginx -t && systemctl reload nginx`.
+
 ## Required `.env` values
 
 | Variable | Example | Notes |
