@@ -44,7 +44,7 @@ export default function Countries() {
           <Button onClick={create} className="bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          🏳️ <b>Premium flag emoji ID</b>: forward a flag from the <a className="underline" href="https://t.me/addemoji/FlagsByKoylli" target="_blank" rel="noreferrer">FlagsByKoylli</a> pack to <code>@idstickerbot</code> and paste the numeric ID here. The bot will render it as <code>&lt;tg-emoji&gt;</code> for premium users.
+          🏳️ <b>Premium flag emoji ID</b>: send the exact flag from <a className="underline" href="https://t.me/addemoji/FlagsByKoylli" target="_blank" rel="noreferrer">FlagsByKoylli</a> to <code>@RawDataBot</code>, copy <code>custom_emoji_id</code> from the JSON, and paste it here. The bot renders it as <code>&lt;tg-emoji&gt;</code> in message text.
         </p>
       </div>
 
