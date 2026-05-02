@@ -16,11 +16,32 @@ const LABELS: Record<string, string> = {
   support_url: "Support URL (All Support button)",
   welcome_text: "Welcome message text",
   reserve_minutes: "Number reservation timeout (minutes)",
+  // OTP delivery — premium look (matches IMS Panel reference)
+  main_channel_url: "Main Channel button URL",
+  number_channel_url: "Number Channel button URL",
+  main_channel_emoji_id: "Main Channel button — premium emoji ID",
+  number_channel_emoji_id: "Number Channel button — premium emoji ID",
+  otp_button_emoji_id: "OTP code button — premium emoji ID",
 };
+
+// Always-visible keys (so admin can configure even if empty in DB)
+const ALWAYS_KEYS = [
+  "main_channel_url",
+  "number_channel_url",
+  "main_channel_emoji_id",
+  "number_channel_emoji_id",
+  "otp_button_emoji_id",
+];
 
 export default function Settings() {
   const [s, setS] = useState<Record<string, any>>({});
-  useEffect(() => { api.settings.list().then(setS).catch((e) => toast.error(e.message)); }, []);
+  useEffect(() => {
+    api.settings.list().then((data) => {
+      const merged = { ...data };
+      for (const k of ALWAYS_KEYS) if (!(k in merged)) merged[k] = "";
+      setS(merged);
+    }).catch((e) => toast.error(e.message));
+  }, []);
 
   const save = async (k: string) => {
     try { await api.settings.set(k, s[k]); toast.success(`Saved: ${k}`); }

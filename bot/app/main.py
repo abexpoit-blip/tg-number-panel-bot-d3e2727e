@@ -369,23 +369,18 @@ async def on_feed_post(msg: Message):
         s.add(otp_row)
         await s.commit()
 
-        # forward to user — premium emoji rendered via <tg-emoji> in HTML body
+        # forward to user — premium emoji + premium buttons via raw Bot API
         if match and user and not user.is_banned:
-            kb = InlineKeyboardMarkup(inline_keyboard=[[
-                copy_button(f"📋 +{match.phone} | {parsed.code}", f"+{match.phone}|{parsed.code}")
-            ]])
-            try:
-                await bot.send_message(
-                    user.tg_id,
-                    f"🔔 <b>New OTP received!</b>\n\n"
-                    f"{flag_html(ctry)} {emoji_html(svc)} <b>{svc.name if svc else 'Service'}</b>\n"
-                    f"📱 Number: <code>+{match.phone}</code>\n"
-                    f"🔑 OTP: <code>{parsed.code}</code>\n\n"
-                    f"Tap below to copy <b>number|otp</b>:",
-                    reply_markup=kb,
-                )
-            except Exception as e:
-                log.exception("Failed to send OTP to user %s: %s", user.tg_id, e)
+            from .delivery import send_otp_message
+            ok = await send_otp_message(
+                user.tg_id,
+                phone=match.phone,
+                code=parsed.code,
+                service=svc,
+                country=ctry,
+            )
+            if not ok:
+                log.warning("Feed: failed to deliver OTP to %s", user.tg_id)
 
 
 # ============= Entrypoint =============
