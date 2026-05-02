@@ -43,6 +43,7 @@ class Country(Base):
     code: Mapped[str] = mapped_column(String(8), index=True)
     iso: Mapped[str] = mapped_column(String(4), default="")
     flag: Mapped[str] = mapped_column(String(16), default="🌍")
+    custom_emoji_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 

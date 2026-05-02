@@ -35,7 +35,8 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         for stmt in [
-            "ALTER TABLE services ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+            "ALTER TABLE services  ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+            "ALTER TABLE countries ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
             "ALTER TABLE numbers  ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
             "ALTER TABLE otps     ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
         ]:
@@ -56,6 +57,15 @@ def emoji_html(svc: Service | None) -> str:
     if svc.custom_emoji_id:
         return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
     return svc.emoji
+
+
+def flag_html(c: Country | None) -> str:
+    """Render Telegram premium flag emoji when configured, fallback to unicode flag."""
+    if not c:
+        return "🌍"
+    if c.custom_emoji_id:
+        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
+    return c.flag
 
 
 # ============= UI =============
@@ -113,7 +123,7 @@ async def on_status(msg: Message):
     lines = ["📊 <b>Your active numbers:</b>\n"]
     for n in rows:
         otp_part = f"  ➜ OTP: <code>{n.last_otp}</code>" if n.last_otp else "  ⏳ Waiting…"
-        lines.append(f"{n.country.flag if n.country else '🌍'} {n.service.emoji if n.service else '📱'} <code>+{n.phone}</code>\n{otp_part}\n")
+        lines.append(f"{flag_html(n.country)} {emoji_html(n.service)} <code>+{n.phone}</code>\n{otp_part}\n")
     await msg.answer("\n".join(lines))
 
 
@@ -124,7 +134,7 @@ async def on_countries(msg: Message):
     if not rows:
         await msg.answer("No countries configured yet.")
         return
-    text = "🌍 <b>Available countries:</b>\n\n" + "\n".join(f"{c.flag} {c.name} (+{c.code})" for c in rows)
+    text = "🌍 <b>Available countries:</b>\n\n" + "\n".join(f"{flag_html(c)} {c.name} (+{c.code})" for c in rows)
     await msg.answer(text)
 
 
@@ -231,7 +241,7 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
             ).limit(5)
         )).scalars().all()
 
-    header = f"{ctry.flag} {sv.emoji} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
+    header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
     rows: list[list[InlineKeyboardButton]] = []
     for n in nums:
         if n.last_otp:
