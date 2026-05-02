@@ -18,7 +18,7 @@ export default function Services() {
 
   const create = async () => {
     if (!draft.code || !draft.name) return toast.error("Code and name required");
-    try { await api.services.create(draft); setDraft({ code: "", name: "", emoji: "📱", enabled: true, sort_order: 0 }); load(); toast.success("Service added"); }
+    try { await api.services.create(draft); setDraft({ code: "", name: "", emoji: "📱", custom_emoji_id: "", enabled: true, sort_order: 0 }); load(); toast.success("Service added"); }
     catch (e: any) { toast.error(e.message); }
   };
   const save = async (s: Service) => { try { await api.services.update(s.id, s); toast.success("Saved"); load(); } catch (e: any) { toast.error(e.message); } };
