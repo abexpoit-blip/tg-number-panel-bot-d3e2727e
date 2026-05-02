@@ -93,7 +93,8 @@ async def list_numbers(
 @router.post("")
 async def create_number(body: NumberIn, _: object = Depends(current_admin), db: AsyncSession = Depends(get_db)):
     phone = re.sub(r"\D", "", body.phone)
-    n = Number(phone=phone, service_id=body.service_id, country_id=body.country_id, enabled=body.enabled)
+    n = Number(phone=phone, service_id=body.service_id, country_id=body.country_id,
+               provider_id=body.provider_id, enabled=body.enabled)
     db.add(n)
     try:
         await db.commit()
