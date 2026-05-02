@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-interface Service { id: number; code: string; name: string; emoji: string; enabled: boolean; sort_order: number }
+interface Service { id: number; code: string; name: string; emoji: string; custom_emoji_id?: string | null; enabled: boolean; sort_order: number }
 
 export default function Services() {
   const [list, setList] = useState<Service[]>([]);
-  const [draft, setDraft] = useState({ code: "", name: "", emoji: "📱", enabled: true, sort_order: 0 });
+  const [draft, setDraft] = useState({ code: "", name: "", emoji: "📱", custom_emoji_id: "", enabled: true, sort_order: 0 });
 
   const load = () => api.services.list().then(setList).catch((e) => toast.error(e.message));
   useEffect(() => { load(); }, []);
