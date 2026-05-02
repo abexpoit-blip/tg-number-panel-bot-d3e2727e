@@ -31,8 +31,18 @@ dp = Dispatcher()
 
 
 async def init_db() -> None:
+    from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        for stmt in [
+            "ALTER TABLE services ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+            "ALTER TABLE numbers  ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+            "ALTER TABLE otps     ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        ]:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass
 
 
 def copy_button(text: str, value: str) -> InlineKeyboardButton:
