@@ -220,7 +220,7 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
         else:
             label = f"{sv.emoji} 📋 +{n.phone}"
             copy = f"+{n.phone}"
-        rows.append([InlineKeyboardButton(text=label, copy_text={"text": copy})])
+        rows.append([copy_button(label, copy)])
     rows.append([InlineKeyboardButton(text="🔄 Change Number", callback_data=f"chg:{svc_id}:{ctry_id}")])
     rows.append([InlineKeyboardButton(text="🌍 Change Country", callback_data=f"svc:{svc_id}")])
     rows.append([InlineKeyboardButton(text="🔑 Get OTP", callback_data=f"refresh:{svc_id}:{ctry_id}")])
@@ -338,10 +338,7 @@ async def on_feed_post(msg: Message):
         # forward to user
         if match and user and not user.is_banned:
             kb = InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(
-                    text=f"📋 +{match.phone} | {parsed.code}",
-                    copy_text={"text": f"+{match.phone}|{parsed.code}"},
-                )
+                copy_button(f"📋 +{match.phone} | {parsed.code}", f"+{match.phone}|{parsed.code}")
             ]])
             try:
                 await bot.send_message(
