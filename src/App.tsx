@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import LiveOTP from "./pages/LiveOTP";
 import Numbers from "./pages/Numbers";
 import Services from "./pages/Services";
+import Providers from "./pages/Providers";
 import Countries from "./pages/Countries";
 import Users from "./pages/Users";
 import Withdrawals from "./pages/Withdrawals";
