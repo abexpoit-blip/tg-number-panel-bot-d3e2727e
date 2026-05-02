@@ -131,6 +131,7 @@ async def update_number(nid: int, body: NumberIn, _: object = Depends(current_ad
     n.phone = re.sub(r"\D", "", body.phone)
     n.service_id = body.service_id
     n.country_id = body.country_id
+    n.provider_id = body.provider_id
     n.enabled = body.enabled
     await db.commit()
     await db.refresh(n)
