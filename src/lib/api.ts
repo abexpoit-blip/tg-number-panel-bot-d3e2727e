@@ -157,4 +157,11 @@ export const api = {
       req(`/withdrawals/${id}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
   },
   sms: { list: () => mapReq(req<any[]>("/sms"), (rows) => rows.map(fromOtp)) },
+  providers: {
+    list: () => req<any[]>("/providers"),
+    create: (b: any) => req("/providers", { method: "POST", body: JSON.stringify(b) }),
+    update: (id: number, b: any) => req(`/providers/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+    remove: (id: number) => req(`/providers/${id}`, { method: "DELETE" }),
+    clearCookies: (id: number) => req(`/providers/${id}/clear-cookies`, { method: "POST" }),
+  },
 };
