@@ -16,12 +16,14 @@ class NumberIn(BaseModel):
     phone: str
     service_id: int
     country_id: int
+    provider_id: int | None = None
     enabled: bool = True
 
 
 class BulkIn(BaseModel):
     service_id: int
     country_id: int
+    provider_id: int | None = None
     phones: str  # newline / comma / space separated
 
 
