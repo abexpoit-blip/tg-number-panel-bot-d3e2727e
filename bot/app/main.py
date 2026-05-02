@@ -354,18 +354,22 @@ async def on_feed_post(msg: Message):
             raw_text=text[:1000],
             service_hint=parsed.service_hint,
         )
+        svc = None
+        ctry = None
         if match:
             match.last_otp = parsed.code
             match.last_otp_at = datetime.utcnow()
             otp_row.matched_number_id = match.id
             otp_row.delivered_to_user_id = match.assigned_user_id
             user = (await s.execute(select(TgUser).where(TgUser.id == match.assigned_user_id))).scalar_one_or_none()
+            svc = (await s.execute(select(Service).where(Service.id == match.service_id))).scalar_one_or_none()
+            ctry = (await s.execute(select(Country).where(Country.id == match.country_id))).scalar_one_or_none()
         else:
             user = None
         s.add(otp_row)
         await s.commit()
 
-        # forward to user
+        # forward to user — premium emoji rendered via <tg-emoji> in HTML body
         if match and user and not user.is_banned:
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 copy_button(f"📋 +{match.phone} | {parsed.code}", f"+{match.phone}|{parsed.code}")
@@ -374,6 +378,7 @@ async def on_feed_post(msg: Message):
                 await bot.send_message(
                     user.tg_id,
                     f"🔔 <b>New OTP received!</b>\n\n"
+                    f"{flag_html(ctry)} {emoji_html(svc)} <b>{svc.name if svc else 'Service'}</b>\n"
                     f"📱 Number: <code>+{match.phone}</code>\n"
                     f"🔑 OTP: <code>{parsed.code}</code>\n\n"
                     f"Tap below to copy <b>number|otp</b>:",

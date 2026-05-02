@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy import select
 
-from .db import Number, Otp, Provider, SessionLocal, Service, TgUser
+from .db import Country, Number, Otp, Provider, SessionLocal, Service, TgUser
 from .scrapers.iprn import IprnClient, iterate_provider
 
 if TYPE_CHECKING:
@@ -35,6 +35,14 @@ def _service_emoji_html(svc: Service | None) -> str:
     if svc.custom_emoji_id:
         return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
     return svc.emoji
+
+
+def _flag_emoji_html(c) -> str:
+    if not c:
+        return "🌍"
+    if getattr(c, "custom_emoji_id", None):
+        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
+    return c.flag or "🌍"
 
 
 class _Dedup:
@@ -78,6 +86,7 @@ async def _deliver(bot: "Bot", row, provider: Provider) -> None:
         )
         user: TgUser | None = None
         svc: Service | None = None
+        ctry: Country | None = None
         if match:
             match.last_otp = code
             match.last_otp_at = datetime.utcnow()
@@ -85,6 +94,7 @@ async def _deliver(bot: "Bot", row, provider: Provider) -> None:
             otp.delivered_to_user_id = match.assigned_user_id
             user = (await s.execute(select(TgUser).where(TgUser.id == match.assigned_user_id))).scalar_one_or_none()
             svc = (await s.execute(select(Service).where(Service.id == match.service_id))).scalar_one_or_none()
+            ctry = (await s.execute(select(Country).where(Country.id == match.country_id))).scalar_one_or_none()
         s.add(otp)
         await s.commit()
 
@@ -92,6 +102,7 @@ async def _deliver(bot: "Bot", row, provider: Provider) -> None:
         return
 
     emoji = _service_emoji_html(svc)
+    flag = _flag_emoji_html(ctry)
     kb = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text=f"📋 +{row.phone} | {code}",
                              copy_text={"text": f"+{row.phone}|{code}"})
@@ -100,7 +111,7 @@ async def _deliver(bot: "Bot", row, provider: Provider) -> None:
         await bot.send_message(
             user.tg_id,
             f"🔔 <b>New OTP received!</b>\n\n"
-            f"{emoji} <b>{(svc.name if svc else 'Service')}</b>\n"
+            f"{flag} {emoji} <b>{(svc.name if svc else 'Service')}</b>\n"
             f"📱 Number: <code>+{row.phone}</code>\n"
             f"🔑 OTP: <code>{code}</code>\n\n"
             f"Tap below to copy <b>number|otp</b>:",
