@@ -209,9 +209,10 @@ export default function EmojiPreview() {
           </div>
 
           <div className="mt-5 rounded-md bg-muted/30 p-3 text-xs text-muted-foreground">
-            💡 Get IDs from <a className="underline" href="https://t.me/idstickerbot" target="_blank" rel="noreferrer">@idstickerbot</a> using the
-            {" "}<a className="underline" href="https://t.me/addemoji/ApplicationEmoji" target="_blank" rel="noreferrer">ApplicationEmoji</a> and
-            {" "}<a className="underline" href="https://t.me/addemoji/FlagsByKoylli" target="_blank" rel="noreferrer">FlagsByKoylli</a> packs.
+            💡 Get IDs by sending the exact premium emoji to <a className="underline" href="https://t.me/RawDataBot" target="_blank" rel="noreferrer">@RawDataBot</a>, then copy
+            the <code>custom_emoji_id</code> from the returned JSON. Use
+            {" "}<a className="underline" href="https://t.me/addemoji/ApplicationEmoji" target="_blank" rel="noreferrer">ApplicationEmoji</a> for services and
+            {" "}<a className="underline" href="https://t.me/addemoji/FlagsByKoylli" target="_blank" rel="noreferrer">FlagsByKoylli</a> for flags.
           </div>
         </div>
       </div>
