@@ -19,12 +19,17 @@ export default function Numbers() {
   const [list, setList] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [countries, setCountries] = useState<any[]>([]);
+  const [providers, setProviders] = useState<any[]>([]);
   const [filter, setFilter] = useState<{ service_id?: number; country_id?: number; status?: string }>({});
-  const [single, setSingle] = useState({ msisdn: "", service_id: 0, country_id: 0, status: "available" });
-  const [bulk, setBulk] = useState({ msisdns: "", service_id: 0, country_id: 0 });
+  const [single, setSingle] = useState({ msisdn: "", service_id: 0, country_id: 0, provider_id: 0, status: "available" });
+  const [bulk, setBulk] = useState({ msisdns: "", service_id: 0, country_id: 0, provider_id: 0 });
 
   const load = () => api.numbers.list(filter).then(setList).catch((e) => toast.error(e.message));
-  useEffect(() => { api.services.list().then(setServices); api.countries.list().then(setCountries); }, []);
+  useEffect(() => {
+    api.services.list().then(setServices);
+    api.countries.list().then(setCountries);
+    api.providers.list().then(setProviders).catch(() => setProviders([]));
+  }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [JSON.stringify(filter)]);
 
