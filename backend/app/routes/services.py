@@ -14,12 +14,17 @@ class ServiceIn(BaseModel):
     name: str
     keyword: str
     emoji: str = "📱"
+    custom_emoji_id: str | None = None
     enabled: bool = True
     sort_order: int = 0
 
 
 def _to_dict(s: Service):
-    return {"id": s.id, "name": s.name, "keyword": s.keyword, "emoji": s.emoji, "enabled": s.enabled, "sort_order": s.sort_order}
+    return {
+        "id": s.id, "name": s.name, "keyword": s.keyword, "emoji": s.emoji,
+        "custom_emoji_id": s.custom_emoji_id,
+        "enabled": s.enabled, "sort_order": s.sort_order,
+    }
 
 
 @router.get("")
