@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-aurora" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-mesh" />
       <div className="absolute -top-40 left-1/2 h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
 
       <div className="relative w-full max-w-md animate-fade-in-up">

@@ -1,7 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Zap, LayoutDashboard, Radio, Phone, Layers, Globe, Users, Wallet, Settings as SettingsIcon, LogOut, Plug } from "lucide-react";
 import { setToken } from "@/lib/api";
-import { cn } from "@/lib/utils";
 
 const LINKS = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -20,14 +19,20 @@ export default function Sidebar() {
   const logout = () => { setToken(null); nav("/login"); };
 
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl">
-      <div className="flex items-center gap-2 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-elegant">
-          <Zap className="h-5 w-5 text-primary-foreground" />
+    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur-2xl relative">
+      {/* glow stripe */}
+      <div className="absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
+
+      <div className="flex items-center gap-3 px-6 py-6">
+        <div className="relative">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
+            <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
+          </div>
+          <div className="absolute inset-0 rounded-xl bg-gradient-primary blur-xl opacity-50 -z-10" />
         </div>
         <div>
-          <div className="font-display text-lg font-semibold tracking-tight text-sidebar-accent-foreground">Seven1tel</div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/60">Admin Panel</div>
+          <div className="font-display text-lg font-bold tracking-tight text-sidebar-accent-foreground">Seven1tel</div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/50 font-medium">Admin Panel</div>
         </div>
       </div>
 
@@ -37,16 +42,9 @@ export default function Sidebar() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                isActive
-                  ? "bg-gradient-primary text-primary-foreground shadow-elegant"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )
-            }
+            className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4 shrink-0" />
             <span>{label}</span>
           </NavLink>
         ))}
@@ -55,7 +53,7 @@ export default function Sidebar() {
       <div className="border-t border-sidebar-border p-3">
         <button
           onClick={logout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+          className="nav-link w-full hover:!bg-destructive/15 hover:!text-destructive"
         >
           <LogOut className="h-4 w-4" /> Logout
         </button>

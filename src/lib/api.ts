@@ -41,6 +41,7 @@ const toCountry = (c: any) => ({
   iso: c.iso ?? (String(c.code).replace(/^\+?\d+$/, "") || c.code),
   code: String(c.dial_code ?? c.phone_code ?? c.code).replace(/\D/g, ""),
   flag: c.flag ?? "🌍",
+  custom_emoji_id: c.custom_emoji_id || null,
   enabled: c.enabled ?? true,
 });
 const fromOtp = (o: any) => ({
