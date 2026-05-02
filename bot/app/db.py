@@ -12,6 +12,12 @@ class Base(DeclarativeBase):
     pass
 
 
+def _async_database_url(url: str) -> str:
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 class Service(Base):
     __tablename__ = "services"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -74,5 +80,5 @@ class Otp(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
-engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True, future=True)
+engine = create_async_engine(_async_database_url(settings.DATABASE_URL), pool_pre_ping=True, future=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
