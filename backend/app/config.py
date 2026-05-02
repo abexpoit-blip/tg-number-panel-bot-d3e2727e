@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,8 +9,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change_me"
     JWT_ALG: str = "HS256"
     JWT_EXPIRE_MIN: int = 720
-    ADMIN_EMAIL: str = "admin@seven1tel.com"
-    ADMIN_PASSWORD: str = "change_me"
+    ADMIN_EMAIL: str = Field("admin@seven1tel.com", validation_alias=AliasChoices("ADMIN_EMAIL", "ADMIN_USERNAME"))
+    ADMIN_PASSWORD: str = Field("change_me", validation_alias=AliasChoices("ADMIN_PASSWORD", "ADMIN_PASS"))
     BOT_BRAND_NAME: str = "Seven1tel Number Panel"
 
 
