@@ -1,0 +1,78 @@
+"""Shared SQLAlchemy session for the bot. Models mirror the backend schema."""
+from datetime import datetime
+
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from .config import settings
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Service(Base):
+    __tablename__ = "services"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    keyword: Mapped[str] = mapped_column(String(80), index=True)
+    emoji: Mapped[str] = mapped_column(String(16), default="📱")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Country(Base):
+    __tablename__ = "countries"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    code: Mapped[str] = mapped_column(String(8), index=True)
+    iso: Mapped[str] = mapped_column(String(4), default="")
+    flag: Mapped[str] = mapped_column(String(16), default="🌍")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class TgUser(Base):
+    __tablename__ = "tg_users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tg_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    username: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    first_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
+    balance: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Number(Base):
+    __tablename__ = "numbers"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phone: Mapped[str] = mapped_column(String(32), index=True)
+    service_id: Mapped[int] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"), index=True)
+    country_id: Mapped[int] = mapped_column(ForeignKey("countries.id", ondelete="CASCADE"), index=True)
+    assigned_user_id: Mapped[int | None] = mapped_column(ForeignKey("tg_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    assigned_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_otp: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    last_otp_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    service: Mapped[Service] = relationship(lazy="joined")
+    country: Mapped[Country] = relationship(lazy="joined")
+
+    __table_args__ = (UniqueConstraint("phone", "service_id", name="uq_phone_service"),)
+
+
+class Otp(Base):
+    __tablename__ = "otps"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phone: Mapped[str] = mapped_column(String(32), index=True)
+    code: Mapped[str] = mapped_column(String(32))
+    raw_text: Mapped[str] = mapped_column(Text, default="")
+    service_hint: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    delivered_to_user_id: Mapped[int | None] = mapped_column(ForeignKey("tg_users.id", ondelete="SET NULL"), nullable=True, index=True)
+    matched_number_id: Mapped[int | None] = mapped_column(ForeignKey("numbers.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True, future=True)
+SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
