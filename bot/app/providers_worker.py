@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy import select
 
-from .db import Number, Otp, Provider, SessionLocal, Service, TgUser
+from .db import Country, Number, Otp, Provider, SessionLocal, Service, TgUser
 from .scrapers.iprn import IprnClient, iterate_provider
 
 if TYPE_CHECKING:
