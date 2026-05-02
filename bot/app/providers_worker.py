@@ -101,24 +101,12 @@ async def _deliver(bot: "Bot", row, provider: Provider) -> None:
     if not (match and user and not user.is_banned):
         return
 
-    emoji = _service_emoji_html(svc)
-    flag = _flag_emoji_html(ctry)
-    kb = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text=f"📋 +{row.phone} | {code}",
-                             copy_text={"text": f"+{row.phone}|{code}"})
-    ]])
-    try:
-        await bot.send_message(
-            user.tg_id,
-            f"🔔 <b>New OTP received!</b>\n\n"
-            f"{flag} {emoji} <b>{(svc.name if svc else 'Service')}</b>\n"
-            f"📱 Number: <code>+{row.phone}</code>\n"
-            f"🔑 OTP: <code>{code}</code>\n\n"
-            f"Tap below to copy <b>number|otp</b>:",
-            reply_markup=kb,
-        )
-    except Exception as e:
-        log.exception("Failed to deliver OTP to %s: %s", user.tg_id, e)
+    from .delivery import send_otp_message
+    ok = await send_otp_message(
+        user.tg_id, phone=row.phone, code=code, service=svc, country=ctry,
+    )
+    if not ok:
+        log.warning("Failed to deliver OTP to %s (phone=%s)", user.tg_id, row.phone)
 
 
 async def _save_cookies(provider_id: int, cookies_json: str) -> None:
