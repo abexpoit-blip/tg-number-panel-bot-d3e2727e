@@ -49,6 +49,15 @@ def copy_button(text: str, value: str) -> InlineKeyboardButton:
     return InlineKeyboardButton(text=text, copy_text=CopyTextButton(text=value[:256]))
 
 
+def emoji_html(svc: Service | None) -> str:
+    """Render Telegram premium custom emoji when configured, fallback to unicode."""
+    if not svc:
+        return "📱"
+    if svc.custom_emoji_id:
+        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
+    return svc.emoji
+
+
 # ============= UI =============
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
