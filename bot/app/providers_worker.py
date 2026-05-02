@@ -130,29 +130,58 @@ async def _record_status(provider_id: int, error: str | None = None) -> None:
 
 
 async def _run_provider(bot: "Bot", provider: Provider) -> None:
+    """Polling loop for one provider with exponential backoff + circuit breaker.
+
+    Failure handling (protects the upstream panel & our IP):
+      * each consecutive error doubles the sleep, capped at 5 minutes
+      * after 8 consecutive errors -> stop polling, mark provider with last_error
+        and require admin to "Clear cookies" / toggle enabled to retry.
+    """
     log.info("starting provider loop name=%s currency=%s interval=%ss",
              provider.name, provider.currency, provider.poll_interval)
     client = IprnClient(provider.base_url, provider.username, provider.password,
                         provider.currency, provider.cookies_json or "")
+
+    base_interval = max(10, provider.poll_interval or 15)
+    backoff = base_interval
+    consecutive_errors = 0
+    MAX_BACKOFF = 300        # 5 minutes
+    MAX_CONSECUTIVE = 8      # then stop until operator intervention
+
     if not provider.cookies_json:
         try:
             await client.login()
             await _save_cookies(provider.id, client.cookies_json())
         except Exception as e:
             log.error("provider %s initial login failed: %s", provider.name, e)
-            await _record_status(provider.id, str(e))
+            await _record_status(provider.id, f"login: {e}")
+            consecutive_errors = 1
+            backoff = min(MAX_BACKOFF, backoff * 2)
 
     while True:
         try:
             async for row in iterate_provider(client):
                 await _deliver(bot, row, provider)
-            # if iterate_provider re-logged in, persist new cookies
             await _save_cookies(provider.id, client.cookies_json())
             await _record_status(provider.id, None)
+            consecutive_errors = 0
+            backoff = base_interval
         except Exception as e:
-            log.exception("provider %s poll error: %s", provider.name, e)
-            await _record_status(provider.id, str(e)[:500])
-        await asyncio.sleep(max(5, provider.poll_interval or 15))
+            consecutive_errors += 1
+            msg = f"{type(e).__name__}: {e}"
+            log.warning("provider %s poll error #%d: %s",
+                        provider.name, consecutive_errors, msg)
+            await _record_status(provider.id, msg[:500])
+            if consecutive_errors >= MAX_CONSECUTIVE:
+                log.error("provider %s disabled after %d failures — operator must intervene",
+                          provider.name, consecutive_errors)
+                await _record_status(
+                    provider.id,
+                    f"STOPPED after {consecutive_errors} failures: {msg[:400]}",
+                )
+                return  # exit the loop; providers_main will restart only if row changes
+            backoff = min(MAX_BACKOFF, max(base_interval, backoff * 2))
+        await asyncio.sleep(backoff)
 
 
 async def providers_main(bot: "Bot") -> None:
