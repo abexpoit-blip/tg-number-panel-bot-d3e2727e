@@ -349,8 +349,10 @@ async def on_feed_post(msg: Message):
 # ============= Entrypoint =============
 
 async def main():
+    global bot
     if not settings.BOT_TOKEN:
-        raise SystemExit("BOT_TOKEN is required")
+        raise SystemExit("BOT_TOKEN is required — set it in your .env file")
+    bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
