@@ -21,7 +21,12 @@ export default function Services() {
     try { await api.services.create(draft); setDraft({ code: "", name: "", emoji: "📱", custom_emoji_id: "", enabled: true, sort_order: 0 }); load(); toast.success("Service added"); }
     catch (e: any) { toast.error(e.message); }
   };
-  const save = async (s: Service) => { try { await api.services.update(s.id, s); toast.success("Saved"); load(); } catch (e: any) { toast.error(e.message); } };
+  const save = async (s: Service) => {
+    if (s.enabled && !s.custom_emoji_id) {
+      if (!confirm(`"${s.name}" is enabled but has no premium emoji ID — users will see plain unicode (${s.emoji}) only. Save anyway?`)) return;
+    }
+    try { await api.services.update(s.id, s); toast.success("Saved"); load(); } catch (e: any) { toast.error(e.message); }
+  };
   const del = async (id: number) => { if (!confirm("Delete service?")) return; try { await api.services.remove(id); toast.success("Deleted"); load(); } catch (e: any) { toast.error(e.message); } };
   const patch = (id: number, k: keyof Service, v: any) => setList(list.map((x) => x.id === id ? { ...x, [k]: v } : x));
 
@@ -56,7 +61,14 @@ export default function Services() {
                 <td><Input value={s.code} onChange={(e) => patch(s.id, "code", e.target.value)} className="h-8 w-24" /></td>
                 <td><Input value={s.name} onChange={(e) => patch(s.id, "name", e.target.value)} className="h-8 w-44" /></td>
                 <td><Input value={s.emoji} onChange={(e) => patch(s.id, "emoji", e.target.value)} className="h-8 w-16" /></td>
-                <td><Input value={s.custom_emoji_id ?? ""} onChange={(e) => patch(s.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" /></td>
+                <td>
+                  <div className="flex items-center gap-1">
+                    <Input value={s.custom_emoji_id ?? ""} onChange={(e) => patch(s.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" />
+                    {s.enabled && !s.custom_emoji_id && (
+                      <span title="Missing premium emoji ID — users see plain unicode" className="text-amber-400">⚠</span>
+                    )}
+                  </div>
+                </td>
                 <td><Input type="number" value={s.sort_order} onChange={(e) => patch(s.id, "sort_order", +e.target.value)} className="h-8 w-20" /></td>
                 <td><Switch checked={s.enabled} onCheckedChange={(v) => patch(s.id, "enabled", v)} /></td>
                 <td className="text-right">
