@@ -47,7 +47,7 @@ export default function Services() {
           <Button onClick={create} className="bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          💎 <b>Premium emoji ID</b>: forward an emoji from the <a className="underline" href="https://t.me/addemoji/ApplicationEmoji" target="_blank" rel="noreferrer">ApplicationEmoji</a> pack (Facebook/WhatsApp/Telegram/etc.) to <code>@idstickerbot</code> in Telegram and paste the numeric ID here. The bot will render it via <code>&lt;tg-emoji&gt;</code> for premium users.
+          💎 <b>Premium emoji ID</b>: send the exact emoji from <a className="underline" href="https://t.me/addemoji/ApplicationEmoji" target="_blank" rel="noreferrer">ApplicationEmoji</a> to <code>@RawDataBot</code>, copy <code>custom_emoji_id</code> from the JSON, and paste it here. The bot renders it via <code>&lt;tg-emoji&gt;</code> in message text.
         </p>
       </div>
 
