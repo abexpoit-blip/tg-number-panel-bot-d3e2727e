@@ -28,8 +28,14 @@ const toNumber = (n: any) => ({
 
 const fromService = (s: any) => ({ ...s, code: s.code ?? s.keyword });
 const toService = (s: any) => ({ ...s, keyword: s.keyword ?? s.code });
-const fromCountry = (c: any) => ({ ...c, code: c.iso || c.code, dial_code: c.dial_code ?? `+${c.code}` });
-const toCountry = (c: any) => ({ ...c, iso: c.iso ?? c.code, code: String(c.dial_code ?? c.code).replace(/\D/g, "") });
+const fromCountry = (c: any) => ({ ...c, iso: c.iso, code: c.iso || c.code, dial_code: c.dial_code ?? `+${c.code}` });
+const toCountry = (c: any) => ({
+  name: c.name,
+  iso: c.iso ?? (String(c.code).replace(/^\+?\d+$/, "") || c.code),
+  code: String(c.dial_code ?? c.phone_code ?? c.code).replace(/\D/g, ""),
+  flag: c.flag ?? "🌍",
+  enabled: c.enabled ?? true,
+});
 const fromOtp = (o: any) => ({
   ...o,
   received_at: o.received_at ?? o.created_at,
