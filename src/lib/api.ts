@@ -111,14 +111,18 @@ export const api = {
         if (v !== undefined && v !== null && v !== "") clean[k] = String(v);
       });
       const p = new URLSearchParams(clean).toString();
-      return req<any[]>(`/numbers${p ? "?" + p : ""}`);
+      return mapReq(req<any[]>(`/numbers${p ? "?" + p : ""}`), (rows) => rows.map(fromNumber));
     },
-    create: (b: any) => req("/numbers", { method: "POST", body: JSON.stringify(b) }),
+    create: (b: any) => req("/numbers", { method: "POST", body: JSON.stringify(toNumber(b)) }),
     bulk: (b: any) => req<{ inserted: number; submitted: number }>("/numbers/bulk", {
       method: "POST",
-      body: JSON.stringify(b),
+      body: JSON.stringify({
+        service_id: b.service_id,
+        country_id: b.country_id,
+        phones: Array.isArray(b.msisdns) ? b.msisdns.join("\n") : b.phones ?? b.msisdns ?? "",
+      }),
     }),
-    update: (id: number, b: any) => req(`/numbers/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+    update: (id: number, b: any) => req(`/numbers/${id}`, { method: "PUT", body: JSON.stringify(toNumber(b)) }),
     remove: (id: number) => req(`/numbers/${id}`, { method: "DELETE" }),
   },
   users: {
@@ -136,5 +140,5 @@ export const api = {
     reject: (id: number, note?: string) =>
       req(`/withdrawals/${id}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
   },
-  sms: { list: () => req<any[]>("/sms") },
+  sms: { list: () => mapReq(req<any[]>("/sms"), (rows) => rows.map(fromOtp)) },
 };
