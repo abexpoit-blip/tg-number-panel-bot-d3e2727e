@@ -1,4 +1,5 @@
 import re
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -22,6 +23,14 @@ class BulkIn(BaseModel):
     service_id: int
     country_id: int
     phones: str  # newline / comma / space separated
+
+
+def _assigned_filter(status: str | None) -> str | None:
+    if status == "reserved":
+        return "yes"
+    if status == "available":
+        return "no"
+    return None
 
 
 def _d(n: Number):
@@ -48,6 +57,7 @@ async def list_numbers(
     service_id: int | None = None,
     country_id: int | None = None,
     assigned: str | None = None,
+    status: str | None = None,
     q: str | None = None,
     _: object = Depends(current_admin),
     db: AsyncSession = Depends(get_db),
@@ -57,10 +67,15 @@ async def list_numbers(
         stmt = stmt.where(Number.service_id == service_id)
     if country_id:
         stmt = stmt.where(Number.country_id == country_id)
+    assigned = assigned or _assigned_filter(status)
     if assigned == "yes":
         stmt = stmt.where(Number.assigned_user_id.is_not(None))
     elif assigned == "no":
         stmt = stmt.where(Number.assigned_user_id.is_(None))
+    if status == "disabled":
+        stmt = stmt.where(Number.enabled == False)
+    elif status == "used":
+        stmt = stmt.where(Number.last_otp.is_not(None))
     if q:
         stmt = stmt.where(Number.phone.ilike(f"%{q}%"))
     rows = (await db.execute(stmt.order_by(Number.id.desc()).limit(500))).scalars().all()
@@ -72,7 +87,11 @@ async def create_number(body: NumberIn, _: object = Depends(current_admin), db: 
     phone = re.sub(r"\D", "", body.phone)
     n = Number(phone=phone, service_id=body.service_id, country_id=body.country_id, enabled=body.enabled)
     db.add(n)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(409, "Number already exists for this service")
     await db.refresh(n)
     return _d(n)
 
