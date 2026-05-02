@@ -109,5 +109,19 @@ class Otp(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class Setting(Base):
+    __tablename__ = "settings"
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[str] = mapped_column(Text, default="")
+
+
 engine = create_async_engine(_async_database_url(settings.DATABASE_URL), pool_pre_ping=True, future=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+
+async def get_setting(key: str, default: str = "") -> str:
+    """Read a Setting value from DB. Returns default if missing/empty."""
+    from sqlalchemy import select
+    async with SessionLocal() as s:
+        row = (await s.execute(select(Setting).where(Setting.key == key))).scalar_one_or_none()
+        return (row.value if row and row.value else default) or default
