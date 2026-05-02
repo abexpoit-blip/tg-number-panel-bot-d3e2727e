@@ -1,5 +1,6 @@
 // API client for the Seven1tel admin panel.
 // Configure VITE_API_BASE in .env (e.g. https://tg.nexus-x.site/api). Falls back to "/api".
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const BASE = (import.meta.env.VITE_API_BASE as string) || "/api";
 
@@ -62,7 +63,9 @@ async function req<T = any>(path: string, init: RequestInit = {}): Promise<T> {
     try {
       const j = await res.json();
       msg = j.detail || j.message || msg;
-    } catch {}
+    } catch {
+      // Keep the HTTP status text when the backend returns non-JSON errors.
+    }
     throw new Error(msg);
   }
   if (res.status === 204) return undefined as unknown as T;
