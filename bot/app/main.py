@@ -359,6 +359,7 @@ async def main():
     global bot
     if not settings.BOT_TOKEN:
         raise SystemExit("BOT_TOKEN is required — set it in your .env file")
+    await init_db()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
