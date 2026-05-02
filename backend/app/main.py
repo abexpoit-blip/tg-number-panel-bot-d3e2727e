@@ -13,10 +13,28 @@ from .routes import auth as auth_routes
 from .routes import countries, dashboard, numbers, services, settings as settings_routes, sms, users, withdrawals
 
 
+async def _ensure_columns(conn):
+    """Add columns introduced after first deploy (idempotent)."""
+    stmts = [
+        "ALTER TABLE services ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+        "ALTER TABLE numbers  ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        "ALTER TABLE otps     ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        "CREATE INDEX IF NOT EXISTS ix_numbers_provider_id ON numbers(provider_id)",
+        "CREATE INDEX IF NOT EXISTS ix_otps_provider_id ON otps(provider_id)",
+    ]
+    from sqlalchemy import text
+    for s in stmts:
+        try:
+            await conn.execute(text(s))
+        except Exception:
+            pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await _ensure_columns(conn)
     async with SessionLocal() as s:
         # Keep exactly one usable admin synced with the current environment values.
         admins = (await s.execute(select(Admin).order_by(Admin.id))).scalars().all()
