@@ -62,30 +62,44 @@ export default function Numbers() {
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <div className="glass-card p-5">
           <h3 className="mb-3 font-display text-base font-semibold">Add single number</h3>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Input placeholder="393406647354" value={single.msisdn} onChange={(e) => setSingle({ ...single, msisdn: e.target.value })} />
             <Select value={String(single.service_id)} onValueChange={(v) => setSingle({ ...single, service_id: +v })}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Service" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
               <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(single.country_id)} onValueChange={(v) => setSingle({ ...single, country_id: +v })}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Country" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
               <SelectContent>{countries.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.flag} {c.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Button onClick={addOne} className="bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
+            <Select value={String(single.provider_id)} onValueChange={(v) => setSingle({ ...single, provider_id: +v })}>
+              <SelectTrigger><SelectValue placeholder="Provider (optional)" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">— No provider —</SelectItem>
+                {providers.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name} ({p.currency})</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
+          <Button onClick={addOne} className="mt-3 bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
         </div>
 
         <div className="glass-card p-5">
           <h3 className="mb-3 font-display text-base font-semibold">Bulk add (one per line)</h3>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Select value={String(bulk.service_id)} onValueChange={(v) => setBulk({ ...bulk, service_id: +v })}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Service" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
               <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(bulk.country_id)} onValueChange={(v) => setBulk({ ...bulk, country_id: +v })}>
-              <SelectTrigger className="w-44"><SelectValue placeholder="Country" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
               <SelectContent>{countries.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.flag} {c.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={String(bulk.provider_id)} onValueChange={(v) => setBulk({ ...bulk, provider_id: +v })}>
+              <SelectTrigger><SelectValue placeholder="Provider" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">— No provider —</SelectItem>
+                {providers.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name} ({p.currency})</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
           <Textarea rows={4} className="mt-3 font-mono text-xs" placeholder={"393406647354\n393925068153\n…"} value={bulk.msisdns} onChange={(e) => setBulk({ ...bulk, msisdns: e.target.value })} />
