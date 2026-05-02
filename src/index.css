@@ -140,7 +140,7 @@
 
   /* Sidebar nav active glow indicator */
   .nav-link {
-    @apply group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200;
     @apply text-sidebar-foreground;
   }
   .nav-link:hover {
