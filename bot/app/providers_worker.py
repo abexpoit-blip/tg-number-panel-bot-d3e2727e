@@ -37,6 +37,14 @@ def _service_emoji_html(svc: Service | None) -> str:
     return svc.emoji
 
 
+def _flag_emoji_html(c) -> str:
+    if not c:
+        return "🌍"
+    if getattr(c, "custom_emoji_id", None):
+        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
+    return c.flag or "🌍"
+
+
 class _Dedup:
     def __init__(self, cap: int = 5000) -> None:
         self._seen: set[tuple[str, str]] = set()
