@@ -5,6 +5,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import EmojiIdField from "@/components/EmojiIdField";
 import { toast } from "sonner";
 
 interface Country { id: number; code: string; name: string; dial_code: string; flag: string; custom_emoji_id?: string | null; enabled: boolean }
@@ -40,7 +41,7 @@ export default function Countries() {
           <Input placeholder="Name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           <Input placeholder="+39" value={draft.dial_code} onChange={(e) => setDraft({ ...draft, dial_code: e.target.value })} />
           <Input placeholder="🇮🇹" value={draft.flag} onChange={(e) => setDraft({ ...draft, flag: e.target.value })} />
-          <Input placeholder="premium flag emoji ID" value={draft.custom_emoji_id} onChange={(e) => setDraft({ ...draft, custom_emoji_id: e.target.value })} />
+          <EmojiIdField value={draft.custom_emoji_id} onChange={(v) => setDraft({ ...draft, custom_emoji_id: v })} className="h-9 w-full font-mono text-xs" placeholder="premium flag emoji ID" />
           <Button onClick={create} className="bg-gradient-primary text-primary-foreground"><Plus className="mr-1 h-4 w-4" /> Add</Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
@@ -60,12 +61,11 @@ export default function Countries() {
                 <td><Input value={c.name} onChange={(e) => patch(c.id, "name", e.target.value)} className="h-8 w-48" /></td>
                 <td><Input value={c.dial_code} onChange={(e) => patch(c.id, "dial_code", e.target.value)} className="h-8 w-24" /></td>
                 <td>
-                  <div className="flex items-center gap-1">
-                    <Input value={c.custom_emoji_id ?? ""} onChange={(e) => patch(c.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" />
-                    {c.enabled && !c.custom_emoji_id && (
-                      <span title="Missing premium flag ID — users see plain unicode" className="text-amber-400">⚠</span>
-                    )}
-                  </div>
+                  <EmojiIdField
+                    value={c.custom_emoji_id ?? ""}
+                    onChange={(v) => patch(c.id, "custom_emoji_id", v)}
+                    showMissingWarning={c.enabled}
+                  />
                 </td>
                 <td><Switch checked={c.enabled} onCheckedChange={(v) => patch(c.id, "enabled", v)} /></td>
                 <td className="text-right">
