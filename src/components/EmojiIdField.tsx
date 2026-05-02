@@ -32,7 +32,7 @@ export default function EmojiIdField({
 
   const handleValidate = () => {
     const res = validateEmojiId(value);
-    if (!res.ok) {
+    if (res.ok === false) {
       setStatus("bad");
       toast.error(`Invalid emoji ID: ${res.error}`);
       return;
