@@ -69,28 +69,39 @@ async function req<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json();
 }
 
+const mapReq = async <T, R>(promise: Promise<T>, mapper: (value: T) => R): Promise<R> => mapper(await promise);
+
 export const api = {
   login: (email: string, password: string) =>
     req<{ access_token: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
-  dashboard: () => req<any>("/dashboard"),
+  dashboard: () => mapReq(req<any>("/dashboard"), (s) => ({
+    ...s,
+    users: s.users ?? s.total_users,
+    numbers_available: s.numbers_available ?? s.available_numbers,
+    numbers_total: s.numbers_total ?? s.total_numbers,
+    otp_24h: s.otp_24h ?? s.otps_24h,
+    otp_total: s.otp_total ?? s.total_otps,
+    pending_withdrawals: s.pending_withdrawals ?? 0,
+    paid_total: s.paid_total ?? 0,
+  })),
   settings: {
     list: () => req<Record<string, any>>("/settings"),
     set: (key: string, value: any) =>
       req(`/settings/${key}`, { method: "PUT", body: JSON.stringify({ value }) }),
   },
   services: {
-    list: () => req<any[]>("/services"),
-    create: (b: any) => req("/services", { method: "POST", body: JSON.stringify(b) }),
-    update: (id: number, b: any) => req(`/services/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+    list: () => mapReq(req<any[]>("/services"), (rows) => rows.map(fromService)),
+    create: (b: any) => req("/services", { method: "POST", body: JSON.stringify(toService(b)) }),
+    update: (id: number, b: any) => req(`/services/${id}`, { method: "PUT", body: JSON.stringify(toService(b)) }),
     remove: (id: number) => req(`/services/${id}`, { method: "DELETE" }),
   },
   countries: {
-    list: () => req<any[]>("/countries"),
-    create: (b: any) => req("/countries", { method: "POST", body: JSON.stringify(b) }),
-    update: (id: number, b: any) => req(`/countries/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+    list: () => mapReq(req<any[]>("/countries"), (rows) => rows.map(fromCountry)),
+    create: (b: any) => req("/countries", { method: "POST", body: JSON.stringify(toCountry(b)) }),
+    update: (id: number, b: any) => req(`/countries/${id}`, { method: "PUT", body: JSON.stringify(toCountry(b)) }),
     remove: (id: number) => req(`/countries/${id}`, { method: "DELETE" }),
   },
   numbers: {
