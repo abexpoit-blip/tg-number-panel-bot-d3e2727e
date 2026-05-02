@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _build_database_url(self) -> "Settings":
-        if not self.DATABASE_URL:
+        if not self.DATABASE_URL or "localhost" in self.DATABASE_URL or "127.0.0.1" in self.DATABASE_URL:
             user = quote_plus(self.POSTGRES_USER)
             password = quote_plus(self.POSTGRES_PASSWORD)
             db = quote_plus(self.POSTGRES_DB)
