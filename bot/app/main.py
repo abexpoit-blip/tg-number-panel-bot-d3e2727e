@@ -9,6 +9,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     CallbackQuery,
+    CopyTextButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
@@ -18,7 +19,7 @@ from aiogram.types import (
 from sqlalchemy import select
 
 from .config import settings
-from .db import Country, Number, Otp, Service, SessionLocal, TgUser
+from .db import Base, Country, Number, Otp, Service, SessionLocal, TgUser, engine
 from .parser import parse_message
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -26,6 +27,15 @@ log = logging.getLogger("bot")
 
 bot: Bot | None = None
 dp = Dispatcher()
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+def copy_button(text: str, value: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(text=text, copy_text=CopyTextButton(text=value[:256]))
 
 
 # ============= UI =============
