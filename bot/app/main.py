@@ -59,6 +59,15 @@ def emoji_html(svc: Service | None) -> str:
     return svc.emoji
 
 
+def flag_html(c: Country | None) -> str:
+    """Render Telegram premium flag emoji when configured, fallback to unicode flag."""
+    if not c:
+        return "🌍"
+    if c.custom_emoji_id:
+        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
+    return c.flag
+
+
 # ============= UI =============
 
 def main_menu_kb() -> ReplyKeyboardMarkup:
