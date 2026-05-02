@@ -16,12 +16,14 @@ class NumberIn(BaseModel):
     phone: str
     service_id: int
     country_id: int
+    provider_id: int | None = None
     enabled: bool = True
 
 
 class BulkIn(BaseModel):
     service_id: int
     country_id: int
+    provider_id: int | None = None
     phones: str  # newline / comma / space separated
 
 
@@ -39,8 +41,10 @@ def _d(n: Number):
         "phone": n.phone,
         "service_id": n.service_id,
         "country_id": n.country_id,
+        "provider_id": n.provider_id,
         "service": n.service.name if n.service else None,
         "country": n.country.name if n.country else None,
+        "provider": n.provider.name if n.provider else None,
         "country_flag": n.country.flag if n.country else None,
         "country_code": n.country.code if n.country else None,
         "service_emoji": n.service.emoji if n.service else None,
@@ -89,7 +93,8 @@ async def list_numbers(
 @router.post("")
 async def create_number(body: NumberIn, _: object = Depends(current_admin), db: AsyncSession = Depends(get_db)):
     phone = re.sub(r"\D", "", body.phone)
-    n = Number(phone=phone, service_id=body.service_id, country_id=body.country_id, enabled=body.enabled)
+    n = Number(phone=phone, service_id=body.service_id, country_id=body.country_id,
+               provider_id=body.provider_id, enabled=body.enabled)
     db.add(n)
     try:
         await db.commit()
@@ -111,7 +116,8 @@ async def bulk(body: BulkIn, _: object = Depends(current_admin), db: AsyncSessio
         exists = (await db.execute(select(Number).where(Number.phone == ph, Number.service_id == body.service_id))).scalar_one_or_none()
         if exists:
             continue
-        db.add(Number(phone=ph, service_id=body.service_id, country_id=body.country_id))
+        db.add(Number(phone=ph, service_id=body.service_id, country_id=body.country_id,
+                      provider_id=body.provider_id))
         inserted += 1
     await db.commit()
     return {"inserted": inserted, "submitted": len(phones)}
@@ -125,6 +131,7 @@ async def update_number(nid: int, body: NumberIn, _: object = Depends(current_ad
     n.phone = re.sub(r"\D", "", body.phone)
     n.service_id = body.service_id
     n.country_id = body.country_id
+    n.provider_id = body.provider_id
     n.enabled = body.enabled
     await db.commit()
     await db.refresh(n)

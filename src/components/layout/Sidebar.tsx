@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Zap, LayoutDashboard, Radio, Phone, Layers, Globe, Users, Wallet, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { Zap, LayoutDashboard, Radio, Phone, Layers, Globe, Users, Wallet, Settings as SettingsIcon, LogOut, Plug } from "lucide-react";
 import { setToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const LINKS = [
   { to: "/otp", label: "Live OTP", icon: Radio },
   { to: "/numbers", label: "Numbers", icon: Phone },
   { to: "/services", label: "Services", icon: Layers },
+  { to: "/providers", label: "Providers", icon: Plug },
   { to: "/countries", label: "Countries", icon: Globe },
   { to: "/users", label: "Users", icon: Users },
   { to: "/withdrawals", label: "Withdrawals", icon: Wallet },

@@ -27,7 +27,14 @@ const toNumber = (n: any) => ({
 });
 
 const fromService = (s: any) => ({ ...s, code: s.code ?? s.keyword });
-const toService = (s: any) => ({ ...s, keyword: s.keyword ?? s.code });
+const toService = (s: any) => ({
+  name: s.name,
+  keyword: s.keyword ?? s.code,
+  emoji: s.emoji ?? "📱",
+  custom_emoji_id: s.custom_emoji_id || null,
+  enabled: s.enabled ?? true,
+  sort_order: s.sort_order ?? 0,
+});
 const fromCountry = (c: any) => ({ ...c, iso: c.iso, code: c.iso || c.code, dial_code: c.dial_code ?? `+${c.code}` });
 const toCountry = (c: any) => ({
   name: c.name,
@@ -150,4 +157,11 @@ export const api = {
       req(`/withdrawals/${id}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
   },
   sms: { list: () => mapReq(req<any[]>("/sms"), (rows) => rows.map(fromOtp)) },
+  providers: {
+    list: () => req<any[]>("/providers"),
+    create: (b: any) => req("/providers", { method: "POST", body: JSON.stringify(b) }),
+    update: (id: number, b: any) => req(`/providers/${id}`, { method: "PUT", body: JSON.stringify(b) }),
+    remove: (id: number) => req(`/providers/${id}`, { method: "DELETE" }),
+    clearCookies: (id: number) => req(`/providers/${id}/clear-cookies`, { method: "POST" }),
+  },
 };

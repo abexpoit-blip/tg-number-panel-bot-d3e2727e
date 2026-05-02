@@ -16,9 +16,10 @@ class Admin(Base):
 class Service(Base):
     __tablename__ = "services"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(80), unique=True)            # e.g. "Facebook 1"
-    keyword: Mapped[str] = mapped_column(String(80), index=True)          # match in OTP text e.g. "FACEBOOK"
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    keyword: Mapped[str] = mapped_column(String(80), index=True)
     emoji: Mapped[str] = mapped_column(String(16), default="📱")
+    custom_emoji_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # Telegram premium emoji
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -27,8 +28,8 @@ class Country(Base):
     __tablename__ = "countries"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(80))
-    code: Mapped[str] = mapped_column(String(8), index=True)              # e.g. "49"
-    iso: Mapped[str] = mapped_column(String(4), default="")               # e.g. "DE"
+    code: Mapped[str] = mapped_column(String(8), index=True)
+    iso: Mapped[str] = mapped_column(String(4), default="")
     flag: Mapped[str] = mapped_column(String(16), default="🌍")
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -40,16 +41,36 @@ class TgUser(Base):
     username: Mapped[str | None] = mapped_column(String(120), nullable=True)
     first_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
-    balance: Mapped[int] = mapped_column(Integer, default=0)              # cosmetic
+    balance: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Provider(Base):
+    """External SMS/OTP provider account (e.g. iprn-sms, seven1tel, etc.)."""
+    __tablename__ = "providers"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)            # human label
+    type: Mapped[str] = mapped_column(String(32), default="iprn", index=True)  # iprn|seven1tel|...
+    base_url: Mapped[str] = mapped_column(String(255), default="https://panel.iprn-sms.com")
+    username: Mapped[str] = mapped_column(String(120))
+    password: Mapped[str] = mapped_column(String(255))
+    currency: Mapped[str] = mapped_column(String(8), default="EUR")       # EUR|USD|GBP
+    cookies_json: Mapped[str] = mapped_column(Text, default="")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    poll_interval: Mapped[int] = mapped_column(Integer, default=15)        # seconds
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_poll_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class Number(Base):
     __tablename__ = "numbers"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    phone: Mapped[str] = mapped_column(String(32), index=True)            # full e164 without +
+    phone: Mapped[str] = mapped_column(String(32), index=True)
     service_id: Mapped[int] = mapped_column(ForeignKey("services.id", ondelete="CASCADE"), index=True)
     country_id: Mapped[int] = mapped_column(ForeignKey("countries.id", ondelete="CASCADE"), index=True)
+    provider_id: Mapped[int | None] = mapped_column(ForeignKey("providers.id", ondelete="SET NULL"), nullable=True, index=True)
     assigned_user_id: Mapped[int | None] = mapped_column(ForeignKey("tg_users.id", ondelete="SET NULL"), nullable=True, index=True)
     assigned_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_otp: Mapped[str | None] = mapped_column(String(32), nullable=True)
@@ -59,6 +80,7 @@ class Number(Base):
 
     service: Mapped[Service] = relationship(lazy="joined")
     country: Mapped[Country] = relationship(lazy="joined")
+    provider: Mapped["Provider | None"] = relationship(lazy="joined")
 
     __table_args__ = (UniqueConstraint("phone", "service_id", name="uq_phone_service"),)
 
@@ -70,6 +92,7 @@ class Otp(Base):
     code: Mapped[str] = mapped_column(String(32))
     raw_text: Mapped[str] = mapped_column(Text, default="")
     service_hint: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    provider_id: Mapped[int | None] = mapped_column(ForeignKey("providers.id", ondelete="SET NULL"), nullable=True, index=True)
     delivered_to_user_id: Mapped[int | None] = mapped_column(ForeignKey("tg_users.id", ondelete="SET NULL"), nullable=True, index=True)
     matched_number_id: Mapped[int | None] = mapped_column(ForeignKey("numbers.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

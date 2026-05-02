@@ -10,13 +10,31 @@ from .config import settings
 from .db import Base, SessionLocal, engine
 from .models import Admin, Country, Service
 from .routes import auth as auth_routes
-from .routes import countries, dashboard, numbers, services, settings as settings_routes, sms, users, withdrawals
+from .routes import countries, dashboard, numbers, providers, services, settings as settings_routes, sms, users, withdrawals
+
+
+async def _ensure_columns(conn):
+    """Add columns introduced after first deploy (idempotent)."""
+    stmts = [
+        "ALTER TABLE services ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+        "ALTER TABLE numbers  ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        "ALTER TABLE otps     ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        "CREATE INDEX IF NOT EXISTS ix_numbers_provider_id ON numbers(provider_id)",
+        "CREATE INDEX IF NOT EXISTS ix_otps_provider_id ON otps(provider_id)",
+    ]
+    from sqlalchemy import text
+    for s in stmts:
+        try:
+            await conn.execute(text(s))
+        except Exception:
+            pass
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await _ensure_columns(conn)
     async with SessionLocal() as s:
         # Keep exactly one usable admin synced with the current environment values.
         admins = (await s.execute(select(Admin).order_by(Admin.id))).scalars().all()
@@ -85,6 +103,7 @@ app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(withdrawals.router, prefix="/withdrawals", tags=["withdrawals"])
 app.include_router(sms.router, prefix="/sms", tags=["sms"])
 app.include_router(settings_routes.router, prefix="/settings", tags=["settings"])
+app.include_router(providers.router, prefix="/providers", tags=["providers"])
 
 
 @app.get("/health")

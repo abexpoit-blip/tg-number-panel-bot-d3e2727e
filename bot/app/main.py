@@ -21,6 +21,7 @@ from sqlalchemy import select
 from .config import settings
 from .db import Base, Country, Number, Otp, Service, SessionLocal, TgUser, engine
 from .parser import parse_message
+from .providers_worker import providers_main
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 log = logging.getLogger("bot")
@@ -30,12 +31,31 @@ dp = Dispatcher()
 
 
 async def init_db() -> None:
+    from sqlalchemy import text
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        for stmt in [
+            "ALTER TABLE services ADD COLUMN IF NOT EXISTS custom_emoji_id VARCHAR(64)",
+            "ALTER TABLE numbers  ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+            "ALTER TABLE otps     ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES providers(id) ON DELETE SET NULL",
+        ]:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass
 
 
 def copy_button(text: str, value: str) -> InlineKeyboardButton:
     return InlineKeyboardButton(text=text, copy_text=CopyTextButton(text=value[:256]))
+
+
+def emoji_html(svc: Service | None) -> str:
+    """Render Telegram premium custom emoji when configured, fallback to unicode."""
+    if not svc:
+        return "📱"
+    if svc.custom_emoji_id:
+        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
+    return svc.emoji
 
 
 # ============= UI =============
@@ -362,6 +382,8 @@ async def main():
     await init_db()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
+    # background worker for IPRN/other providers
+    asyncio.create_task(providers_main(bot))
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
