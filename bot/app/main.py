@@ -385,16 +385,42 @@ async def on_feed_post(msg: Message):
 
 # ============= Entrypoint =============
 
+# ============= Entrypoint =============
+
 async def main():
     global bot
     if not settings.BOT_TOKEN:
         raise SystemExit("BOT_TOKEN is required — set it in your .env file")
     await init_db()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    # Sanity check + clear any stale webhook (most common cause of "/start gives no reply")
+    try:
+        me = await bot.get_me()
+        log.info("Bot identity: @%s id=%s name=%r", me.username, me.id, me.first_name)
+    except Exception as e:
+        raise SystemExit(f"BOT_TOKEN is invalid (getMe failed): {e}")
+
+    try:
+        info = await bot.get_webhook_info()
+        if info.url:
+            log.warning("Found existing webhook %r — deleting so polling can receive updates", info.url)
+        # Always delete + drop any queued updates from prior bad runs.
+        await bot.delete_webhook(drop_pending_updates=True)
+        log.info("Webhook cleared, pending updates dropped.")
+    except Exception as e:
+        log.warning("delete_webhook failed (continuing anyway): %s", e)
+
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
     # background worker for IPRN/other providers
     asyncio.create_task(providers_main(bot))
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    # Explicit update list so private chats (`message`) AND channel feed both work.
+    await dp.start_polling(
+        bot,
+        allowed_updates=["message", "edited_message", "callback_query",
+                         "channel_post", "edited_channel_post"],
+    )
+
 
 
 if __name__ == "__main__":
