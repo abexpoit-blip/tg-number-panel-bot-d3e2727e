@@ -76,6 +76,10 @@ async def list_numbers(
         stmt = stmt.where(Number.enabled == False)
     elif status == "used":
         stmt = stmt.where(Number.last_otp.is_not(None))
+    elif status == "available":
+        stmt = stmt.where(Number.enabled == True, Number.last_otp.is_(None), Number.assigned_user_id.is_(None))
+    elif status == "reserved":
+        stmt = stmt.where(Number.enabled == True, Number.last_otp.is_(None), Number.assigned_user_id.is_not(None))
     if q:
         stmt = stmt.where(Number.phone.ilike(f"%{q}%"))
     rows = (await db.execute(stmt.order_by(Number.id.desc()).limit(500))).scalars().all()
