@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
@@ -43,7 +43,7 @@ async def current_admin(
         email = payload.get("sub")
     except JWTError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
-    row = (await db.execute(select(Admin).where(Admin.email == email))).scalar_one_or_none()
+    row = (await db.execute(select(Admin).where(func.lower(Admin.email) == str(email).lower()))).scalar_one_or_none()
     if not row:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Admin not found")
     return row
