@@ -27,7 +27,14 @@ const toNumber = (n: any) => ({
 });
 
 const fromService = (s: any) => ({ ...s, code: s.code ?? s.keyword });
-const toService = (s: any) => ({ ...s, keyword: s.keyword ?? s.code });
+const toService = (s: any) => ({
+  name: s.name,
+  keyword: s.keyword ?? s.code,
+  emoji: s.emoji ?? "📱",
+  custom_emoji_id: s.custom_emoji_id || null,
+  enabled: s.enabled ?? true,
+  sort_order: s.sort_order ?? 0,
+});
 const fromCountry = (c: any) => ({ ...c, iso: c.iso, code: c.iso || c.code, dial_code: c.dial_code ?? `+${c.code}` });
 const toCountry = (c: any) => ({
   name: c.name,
