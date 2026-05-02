@@ -35,7 +35,7 @@ export default function Numbers() {
 
   const addOne = async () => {
     if (!single.msisdn || !single.service_id || !single.country_id) return toast.error("Fill all fields");
-    try { await api.numbers.create(single); setSingle({ ...single, msisdn: "" }); load(); toast.success("Number added"); }
+    try { await api.numbers.create({ ...single, provider_id: single.provider_id || null }); setSingle({ ...single, msisdn: "" }); load(); toast.success("Number added"); }
     catch (e: any) { toast.error(e.message); }
   };
   const addBulk = async () => {
@@ -43,7 +43,7 @@ export default function Numbers() {
     const arr = bulk.msisdns.split(/[\s,;]+/).filter(Boolean);
     if (!arr.length) return toast.error("Paste numbers");
     try {
-      const r = await api.numbers.bulk({ msisdns: arr, service_id: bulk.service_id, country_id: bulk.country_id });
+      const r = await api.numbers.bulk({ msisdns: arr, service_id: bulk.service_id, country_id: bulk.country_id, provider_id: bulk.provider_id || null });
       toast.success(`Inserted ${r.inserted} of ${r.submitted}`);
       setBulk({ ...bulk, msisdns: "" }); load();
     } catch (e: any) { toast.error(e.message); }
