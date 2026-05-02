@@ -39,7 +39,8 @@ services:
 
   admin-panel:
     build:
-      context: ./admin-panel
+      context: .
+      dockerfile: admin-panel.Dockerfile
       args:
         VITE_API_BASE: /api
     restart: unless-stopped
