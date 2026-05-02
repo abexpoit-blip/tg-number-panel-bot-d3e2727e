@@ -5,6 +5,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import EmojiIdField from "@/components/EmojiIdField";
 import { toast } from "sonner";
 
 interface Service { id: number; code: string; name: string; emoji: string; custom_emoji_id?: string | null; enabled: boolean; sort_order: number }
@@ -39,7 +40,7 @@ export default function Services() {
           <Input placeholder="code" value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value })} />
           <Input placeholder="name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           <Input placeholder="emoji" value={draft.emoji} onChange={(e) => setDraft({ ...draft, emoji: e.target.value })} />
-          <Input placeholder="premium emoji ID" value={draft.custom_emoji_id} onChange={(e) => setDraft({ ...draft, custom_emoji_id: e.target.value })} />
+          <EmojiIdField value={draft.custom_emoji_id} onChange={(v) => setDraft({ ...draft, custom_emoji_id: v })} className="h-9 w-full font-mono text-xs" placeholder="premium emoji ID" />
           <Input type="number" placeholder="sort" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: +e.target.value })} />
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Switch checked={draft.enabled} onCheckedChange={(v) => setDraft({ ...draft, enabled: v })} /> enabled
@@ -62,12 +63,11 @@ export default function Services() {
                 <td><Input value={s.name} onChange={(e) => patch(s.id, "name", e.target.value)} className="h-8 w-44" /></td>
                 <td><Input value={s.emoji} onChange={(e) => patch(s.id, "emoji", e.target.value)} className="h-8 w-16" /></td>
                 <td>
-                  <div className="flex items-center gap-1">
-                    <Input value={s.custom_emoji_id ?? ""} onChange={(e) => patch(s.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" />
-                    {s.enabled && !s.custom_emoji_id && (
-                      <span title="Missing premium emoji ID — users see plain unicode" className="text-amber-400">⚠</span>
-                    )}
-                  </div>
+                  <EmojiIdField
+                    value={s.custom_emoji_id ?? ""}
+                    onChange={(v) => patch(s.id, "custom_emoji_id", v)}
+                    showMissingWarning={s.enabled}
+                  />
                 </td>
                 <td><Input type="number" value={s.sort_order} onChange={(e) => patch(s.id, "sort_order", +e.target.value)} className="h-8 w-20" /></td>
                 <td><Switch checked={s.enabled} onCheckedChange={(v) => patch(s.id, "enabled", v)} /></td>

@@ -5,6 +5,7 @@ import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import EmojiIdField from "@/components/EmojiIdField";
 import { toast } from "sonner";
 
 const LABELS: Record<string, string> = {
@@ -59,6 +60,15 @@ export default function Settings() {
       );
     if (typeof v === "number")
       return <Input type="number" step="0.01" value={v} onChange={(e) => setS({ ...s, [k]: Number(e.target.value) })} />;
+    if (k.endsWith("_emoji_id"))
+      return (
+        <EmojiIdField
+          value={String(v ?? "")}
+          onChange={(nv) => setS({ ...s, [k]: nv })}
+          className="h-9 w-full font-mono text-xs"
+          placeholder="paste numeric custom_emoji_id"
+        />
+      );
     return <Input value={v ?? ""} onChange={(e) => setS({ ...s, [k]: e.target.value })} />;
   };
 
