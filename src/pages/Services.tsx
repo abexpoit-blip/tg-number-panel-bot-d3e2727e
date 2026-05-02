@@ -48,7 +48,7 @@ export default function Services() {
 
       <div className="glass-card overflow-hidden p-0">
         <table className="data-table">
-          <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Emoji</th><th>Sort</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Emoji</th><th>Premium ID</th><th>Sort</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {list.map((s) => (
               <tr key={s.id}>
@@ -56,6 +56,7 @@ export default function Services() {
                 <td><Input value={s.code} onChange={(e) => patch(s.id, "code", e.target.value)} className="h-8 w-24" /></td>
                 <td><Input value={s.name} onChange={(e) => patch(s.id, "name", e.target.value)} className="h-8 w-44" /></td>
                 <td><Input value={s.emoji} onChange={(e) => patch(s.id, "emoji", e.target.value)} className="h-8 w-16" /></td>
+                <td><Input value={s.custom_emoji_id ?? ""} onChange={(e) => patch(s.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" /></td>
                 <td><Input type="number" value={s.sort_order} onChange={(e) => patch(s.id, "sort_order", +e.target.value)} className="h-8 w-20" /></td>
                 <td><Switch checked={s.enabled} onCheckedChange={(v) => patch(s.id, "enabled", v)} /></td>
                 <td className="text-right">
@@ -66,7 +67,7 @@ export default function Services() {
                 </td>
               </tr>
             ))}
-            {list.length === 0 && (<tr><td colSpan={7} className="py-10 text-center text-muted-foreground">No services yet.</td></tr>)}
+            {list.length === 0 && (<tr><td colSpan={8} className="py-10 text-center text-muted-foreground">No services yet.</td></tr>)}
           </tbody>
         </table>
       </div>
