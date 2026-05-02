@@ -116,7 +116,8 @@ async def bulk(body: BulkIn, _: object = Depends(current_admin), db: AsyncSessio
         exists = (await db.execute(select(Number).where(Number.phone == ph, Number.service_id == body.service_id))).scalar_one_or_none()
         if exists:
             continue
-        db.add(Number(phone=ph, service_id=body.service_id, country_id=body.country_id))
+        db.add(Number(phone=ph, service_id=body.service_id, country_id=body.country_id,
+                      provider_id=body.provider_id))
         inserted += 1
     await db.commit()
     return {"inserted": inserted, "submitted": len(phones)}
