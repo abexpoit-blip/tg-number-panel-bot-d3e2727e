@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
-from .auth import hash_pw
+from .auth import hash_pw, verify_pw
 from .config import settings
 from .db import Base, SessionLocal, engine
 from .models import Admin, Country, Service
@@ -21,6 +21,8 @@ async def lifespan(app: FastAPI):
         existing = (await s.execute(select(Admin).where(Admin.email == settings.ADMIN_EMAIL))).scalar_one_or_none()
         if not existing:
             s.add(Admin(email=settings.ADMIN_EMAIL, password_hash=hash_pw(settings.ADMIN_PASSWORD)))
+        elif settings.ADMIN_PASSWORD and not verify_pw(settings.ADMIN_PASSWORD, existing.password_hash):
+            existing.password_hash = hash_pw(settings.ADMIN_PASSWORD)
         # seed default services
         if not (await s.execute(select(Service))).first():
             defaults = [
