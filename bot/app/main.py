@@ -9,6 +9,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     CallbackQuery,
+    CopyTextButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     KeyboardButton,
@@ -18,7 +19,7 @@ from aiogram.types import (
 from sqlalchemy import select
 
 from .config import settings
-from .db import Country, Number, Otp, Service, SessionLocal, TgUser
+from .db import Base, Country, Number, Otp, Service, SessionLocal, TgUser, engine
 from .parser import parse_message
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -26,6 +27,15 @@ log = logging.getLogger("bot")
 
 bot: Bot | None = None
 dp = Dispatcher()
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+def copy_button(text: str, value: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(text=text, copy_text=CopyTextButton(text=value[:256]))
 
 
 # ============= UI =============
@@ -210,7 +220,7 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
         else:
             label = f"{sv.emoji} 📋 +{n.phone}"
             copy = f"+{n.phone}"
-        rows.append([InlineKeyboardButton(text=label, copy_text={"text": copy})])
+        rows.append([copy_button(label, copy)])
     rows.append([InlineKeyboardButton(text="🔄 Change Number", callback_data=f"chg:{svc_id}:{ctry_id}")])
     rows.append([InlineKeyboardButton(text="🌍 Change Country", callback_data=f"svc:{svc_id}")])
     rows.append([InlineKeyboardButton(text="🔑 Get OTP", callback_data=f"refresh:{svc_id}:{ctry_id}")])
@@ -328,10 +338,7 @@ async def on_feed_post(msg: Message):
         # forward to user
         if match and user and not user.is_banned:
             kb = InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(
-                    text=f"📋 +{match.phone} | {parsed.code}",
-                    copy_text={"text": f"+{match.phone}|{parsed.code}"},
-                )
+                copy_button(f"📋 +{match.phone} | {parsed.code}", f"+{match.phone}|{parsed.code}")
             ]])
             try:
                 await bot.send_message(
@@ -352,6 +359,7 @@ async def main():
     global bot
     if not settings.BOT_TOKEN:
         raise SystemExit("BOT_TOKEN is required — set it in your .env file")
+    await init_db()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())

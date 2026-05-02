@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from .auth import hash_pw, verify_pw
 from .config import settings
@@ -17,12 +18,15 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with SessionLocal() as s:
-        # seed admin
-        existing = (await s.execute(select(Admin).where(Admin.email == settings.ADMIN_EMAIL))).scalar_one_or_none()
-        if not existing:
+        # Keep exactly one usable admin synced with the current environment values.
+        admins = (await s.execute(select(Admin).order_by(Admin.id))).scalars().all()
+        primary = next((admin for admin in admins if admin.email == settings.ADMIN_EMAIL), None) or (admins[0] if admins else None)
+        if primary:
+            primary.email = settings.ADMIN_EMAIL
+            if settings.ADMIN_PASSWORD and not verify_pw(settings.ADMIN_PASSWORD, primary.password_hash):
+                primary.password_hash = hash_pw(settings.ADMIN_PASSWORD)
+        else:
             s.add(Admin(email=settings.ADMIN_EMAIL, password_hash=hash_pw(settings.ADMIN_PASSWORD)))
-        elif settings.ADMIN_PASSWORD and not verify_pw(settings.ADMIN_PASSWORD, existing.password_hash):
-            existing.password_hash = hash_pw(settings.ADMIN_PASSWORD)
         # seed default services
         if not (await s.execute(select(Service))).first():
             defaults = [
@@ -51,7 +55,14 @@ async def lifespan(app: FastAPI):
             ]
             for name, code, iso, flag in ctry:
                 s.add(Country(name=name, code=code, iso=iso, flag=flag))
-        await s.commit()
+        try:
+            await s.commit()
+        except IntegrityError:
+            await s.rollback()
+            existing = (await s.execute(select(Admin).where(Admin.email == settings.ADMIN_EMAIL))).scalar_one_or_none()
+            if existing and settings.ADMIN_PASSWORD:
+                existing.password_hash = hash_pw(settings.ADMIN_PASSWORD)
+                await s.commit()
     yield
 
 
