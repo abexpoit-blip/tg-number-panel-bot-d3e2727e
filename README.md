@@ -20,7 +20,7 @@ cd tg-number-panel-bot
 
 # 2. Configure environment
 cp .env.example .env
-nano .env   # set BOT_TOKEN, OTP_FEED_CHANNEL_ID, ADMIN_CHAT_ID, strong passwords
+nano .env   # set BOT_TOKEN, OTP_FEED_CHANNEL_ID (or OTP_CHANNEL_ID), ADMIN_CHAT_ID, strong passwords
 
 # 3. Build & start
 docker compose up -d --build
@@ -41,7 +41,7 @@ The host nginx (or any reverse proxy) should forward `tg.nexus-x.site` → `127.
 | `ADMIN_PASSWORD` | `Shovon@5448` | Admin panel login |
 | `BOT_TOKEN` | `123456:ABC...` | From @BotFather |
 | `ADMIN_CHAT_ID` | `5311644406` | Your Telegram user ID |
-| `OTP_FEED_CHANNEL_ID` | `-1003726383667` | Channel the bot is a member of |
+| `OTP_FEED_CHANNEL_ID` | `-1003726383667` | Channel the bot is a member of; `OTP_CHANNEL_ID` is also accepted |
 
 ## How OTP delivery works
 
