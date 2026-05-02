@@ -21,7 +21,12 @@ export default function Countries() {
     try { await api.countries.create(draft); setDraft({ code: "", name: "", dial_code: "+", flag: "🏳️", custom_emoji_id: "", enabled: true }); load(); toast.success("Country added"); }
     catch (e: any) { toast.error(e.message); }
   };
-  const save = async (c: Country) => { try { await api.countries.update(c.id, c); toast.success("Saved"); load(); } catch (e: any) { toast.error(e.message); } };
+  const save = async (c: Country) => {
+    if (c.enabled && !c.custom_emoji_id) {
+      if (!confirm(`"${c.name}" is enabled but has no premium flag emoji ID — users will see plain unicode (${c.flag}) only. Save anyway?`)) return;
+    }
+    try { await api.countries.update(c.id, c); toast.success("Saved"); load(); } catch (e: any) { toast.error(e.message); }
+  };
   const del = async (id: number) => { if (!confirm("Delete country?")) return; try { await api.countries.remove(id); toast.success("Deleted"); load(); } catch (e: any) { toast.error(e.message); } };
   const patch = (id: number, k: keyof Country, v: any) => setList(list.map((x) => x.id === id ? { ...x, [k]: v } : x));
 
@@ -54,7 +59,14 @@ export default function Countries() {
                 <td><Input value={c.code} onChange={(e) => patch(c.id, "code", e.target.value.toUpperCase())} className="h-8 w-20" /></td>
                 <td><Input value={c.name} onChange={(e) => patch(c.id, "name", e.target.value)} className="h-8 w-48" /></td>
                 <td><Input value={c.dial_code} onChange={(e) => patch(c.id, "dial_code", e.target.value)} className="h-8 w-24" /></td>
-                <td><Input value={c.custom_emoji_id ?? ""} onChange={(e) => patch(c.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" /></td>
+                <td>
+                  <div className="flex items-center gap-1">
+                    <Input value={c.custom_emoji_id ?? ""} onChange={(e) => patch(c.id, "custom_emoji_id", e.target.value)} className="h-8 w-44 font-mono text-xs" placeholder="—" />
+                    {c.enabled && !c.custom_emoji_id && (
+                      <span title="Missing premium flag ID — users see plain unicode" className="text-amber-400">⚠</span>
+                    )}
+                  </div>
+                </td>
                 <td><Switch checked={c.enabled} onCheckedChange={(v) => patch(c.id, "enabled", v)} /></td>
                 <td className="text-right">
                   <div className="flex justify-end gap-2">

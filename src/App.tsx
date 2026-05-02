@@ -14,6 +14,7 @@ import Countries from "./pages/Countries";
 import Users from "./pages/Users";
 import Withdrawals from "./pages/Withdrawals";
 import Settings from "./pages/Settings";
+import EmojiPreview from "./pages/EmojiPreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/users" element={<Shell><Users /></Shell>} />
           <Route path="/withdrawals" element={<Shell><Withdrawals /></Shell>} />
           <Route path="/settings" element={<Shell><Settings /></Shell>} />
+          <Route path="/emoji-preview" element={<Shell><EmojiPreview /></Shell>} />
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
