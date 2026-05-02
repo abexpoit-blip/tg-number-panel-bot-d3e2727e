@@ -3,6 +3,39 @@
 
 const BASE = (import.meta.env.VITE_API_BASE as string) || "/api";
 
+const numberStatus = (n: any) => {
+  if (n.status) return n.status;
+  if (n.enabled === false) return "disabled";
+  if (n.last_otp) return "used";
+  return n.assigned_user_id ? "reserved" : "available";
+};
+
+const fromNumber = (n: any) => ({
+  ...n,
+  msisdn: n.msisdn ?? n.phone,
+  service_name: n.service_name ?? n.service,
+  country_name: n.country_name ?? n.country,
+  status: numberStatus(n),
+});
+
+const toNumber = (n: any) => ({
+  phone: n.phone ?? n.msisdn,
+  service_id: n.service_id,
+  country_id: n.country_id,
+  enabled: n.status ? n.status !== "disabled" : n.enabled ?? true,
+});
+
+const fromService = (s: any) => ({ ...s, code: s.code ?? s.keyword });
+const toService = (s: any) => ({ ...s, keyword: s.keyword ?? s.code });
+const fromCountry = (c: any) => ({ ...c, code: c.iso || c.code, dial_code: c.dial_code ?? `+${c.code}` });
+const toCountry = (c: any) => ({ ...c, iso: c.iso ?? c.code, code: String(c.dial_code ?? c.code).replace(/\D/g, "") });
+const fromOtp = (o: any) => ({
+  ...o,
+  received_at: o.received_at ?? o.created_at,
+  msisdn: o.msisdn ?? o.phone,
+  otp_code: o.otp_code ?? o.code,
+});
+
 export function token(): string | null {
   return localStorage.getItem("token");
 }
