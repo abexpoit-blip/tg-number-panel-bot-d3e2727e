@@ -363,6 +363,8 @@ async def main():
     await init_db()
     bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     log.info("Starting bot. Brand=%s Feed=%s", settings.BOT_BRAND_NAME, settings.OTP_FEED_CHANNEL_ID)
+    # background worker for IPRN/other providers
+    asyncio.create_task(providers_main(bot))
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
