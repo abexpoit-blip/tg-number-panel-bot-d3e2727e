@@ -122,12 +122,27 @@ async def on_status(msg: Message):
 
 @dp.message(F.text == "🌍 Available Country")
 async def on_countries(msg: Message):
+    from sqlalchemy import func
     async with SessionLocal() as s:
-        rows = (await s.execute(select(Country).where(Country.enabled == True).order_by(Country.name))).scalars().all()
+        # only countries that currently have at least one unassigned, enabled number
+        stmt = (
+            select(Country, func.count(Number.id))
+            .join(Number, Number.country_id == Country.id)
+            .where(
+                Country.enabled == True,
+                Number.enabled == True,
+                Number.assigned_user_id.is_(None),
+            )
+            .group_by(Country.id)
+            .order_by(Country.name)
+        )
+        rows = (await s.execute(stmt)).all()
     if not rows:
-        await msg.answer("No countries configured yet.")
+        await msg.answer("📭 No countries with available numbers right now.")
         return
-    text = "🌍 <b>Available countries:</b>\n\n" + "\n".join(f"{flag_html(c)} {c.name} (+{c.code})" for c in rows)
+    text = "🌍 <b>Available countries:</b>\n\n" + "\n".join(
+        f"{flag_html(c)} <b>{c.name}</b> (+{c.code}) — {cnt} available" for c, cnt in rows
+    )
     await msg.answer(text)
 
 
