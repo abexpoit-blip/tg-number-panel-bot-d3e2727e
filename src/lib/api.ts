@@ -137,6 +137,7 @@ export const api = {
       body: JSON.stringify({
         service_id: b.service_id,
         country_id: b.country_id,
+        provider_id: b.provider_id || null,
         phones: Array.isArray(b.msisdns) ? b.msisdns.join("\n") : b.phones ?? b.msisdns ?? "",
       }),
     }),
