@@ -20,6 +20,7 @@ from sqlalchemy import select
 
 from .config import settings
 from .db import Base, Country, Number, Otp, Service, SessionLocal, TgUser, engine
+from .emoji import flag_emoji_html, service_emoji_html
 from .parser import parse_message
 from .providers_worker import providers_main
 
@@ -52,20 +53,12 @@ def copy_button(text: str, value: str) -> InlineKeyboardButton:
 
 def emoji_html(svc: Service | None) -> str:
     """Render Telegram premium custom emoji when configured, fallback to unicode."""
-    if not svc:
-        return "📱"
-    if svc.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
-    return svc.emoji
+    return service_emoji_html(svc)
 
 
 def flag_html(c: Country | None) -> str:
     """Render Telegram premium flag emoji when configured, fallback to unicode flag."""
-    if not c:
-        return "🌍"
-    if c.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
-    return c.flag
+    return flag_emoji_html(c)
 
 
 # ============= UI =============
