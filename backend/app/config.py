@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = Field("admin@seven1tel.com", validation_alias=AliasChoices("ADMIN_EMAIL", "ADMIN_USERNAME"))
     ADMIN_PASSWORD: str = Field("change_me", validation_alias=AliasChoices("ADMIN_PASSWORD", "ADMIN_PASS"))
     BOT_BRAND_NAME: str = "Seven1tel Number Panel"
+    BOT_TOKEN: str = ""
 
     @field_validator("DATABASE_URL", "JWT_SECRET", "ADMIN_EMAIL", "ADMIN_PASSWORD", mode="before")
     @classmethod
