@@ -146,7 +146,8 @@ async def on_get_number(msg: Message):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"{sv.emoji} {sv.name}", callback_data=f"svc:{sv.id}")] for sv in services
     ])
-    await msg.answer("🎚 <b>Select a Service:</b>", reply_markup=kb)
+    service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
+    await msg.answer(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
 
 
 @dp.callback_query(F.data.startswith("svc:"))
@@ -177,8 +178,12 @@ async def on_service_chosen(cb: CallbackQuery):
     buttons.append([InlineKeyboardButton(text="⬅️ Back To Services", callback_data="back:svc")])
     async with SessionLocal() as s:
         sv = (await s.execute(select(Service).where(Service.id == svc_id))).scalar_one()
+    country_lines = "\n".join(
+        f"{flag_html(c)} <b>{c.name}</b> (+{c.code}) - {cnt}"
+        for _cid, (c, cnt) in sorted(counts.items(), key=lambda kv: -kv[1][1])
+    )
     await cb.message.edit_text(
-        f"{sv.emoji} <b>Select country for {sv.name}:</b>",
+        f"{emoji_html(sv)} <b>Select country for {sv.name}:</b>\n\n{country_lines}",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
     )
     await cb.answer()
@@ -191,7 +196,8 @@ async def back_to_services(cb: CallbackQuery):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"{sv.emoji} {sv.name}", callback_data=f"svc:{sv.id}")] for sv in services
     ])
-    await cb.message.edit_text("🎚 <b>Select a Service:</b>", reply_markup=kb)
+    service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
+    await cb.message.edit_text(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
     await cb.answer()
 
 
