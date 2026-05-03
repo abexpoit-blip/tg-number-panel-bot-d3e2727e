@@ -44,7 +44,7 @@ def _d(n: Number):
         "provider_id": n.provider_id,
         "service": n.service.name if n.service else None,
         "service_name": n.service.name if n.service else None,
-        "service_code": n.service.code if n.service else None,
+        "service_keyword": n.service.keyword if n.service else None,
         "country": n.country.name if n.country else None,
         "country_name": n.country.name if n.country else None,
         "provider": n.provider.name if n.provider else None,
