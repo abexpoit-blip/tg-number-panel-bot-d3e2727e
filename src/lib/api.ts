@@ -23,6 +23,7 @@ const toNumber = (n: any) => ({
   phone: n.phone ?? n.msisdn,
   service_id: n.service_id,
   country_id: n.country_id,
+  provider_id: n.provider_id || null,
   enabled: n.status ? n.status !== "disabled" : n.enabled ?? true,
 });
 
