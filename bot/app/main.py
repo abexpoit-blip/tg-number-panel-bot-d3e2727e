@@ -167,7 +167,7 @@ async def on_get_number(msg: Message):
         await msg.answer("No services available right now.")
         return
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"{sv.emoji} {sv.name}", callback_data=f"svc:{sv.id}")] for sv in services
+        [InlineKeyboardButton(text=f"   {sv.emoji}   {sv.name.upper()}   ", callback_data=f"svc:{sv.id}")] for sv in services
     ])
     service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
     await msg.answer(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
