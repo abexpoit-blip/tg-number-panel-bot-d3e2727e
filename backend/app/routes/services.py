@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import current_admin
 from ..db import get_db
+from ..emoji import clean_custom_emoji_id
 from ..models import Service
 
 router = APIRouter()
@@ -35,7 +36,9 @@ async def list_services(_: object = Depends(current_admin), db: AsyncSession = D
 
 @router.post("")
 async def create_service(body: ServiceIn, _: object = Depends(current_admin), db: AsyncSession = Depends(get_db)):
-    s = Service(**body.model_dump())
+    data = body.model_dump()
+    data["custom_emoji_id"] = clean_custom_emoji_id(data.get("custom_emoji_id"))
+    s = Service(**data)
     db.add(s)
     await db.commit()
     await db.refresh(s)
@@ -47,7 +50,9 @@ async def update_service(sid: int, body: ServiceIn, _: object = Depends(current_
     s = (await db.execute(select(Service).where(Service.id == sid))).scalar_one_or_none()
     if not s:
         raise HTTPException(404)
-    for k, v in body.model_dump().items():
+    data = body.model_dump()
+    data["custom_emoji_id"] = clean_custom_emoji_id(data.get("custom_emoji_id"))
+    for k, v in data.items():
         setattr(s, k, v)
     await db.commit()
     return _to_dict(s)
