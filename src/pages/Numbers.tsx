@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, RotateCcw, Trash2, Upload } from "lucide-react";
+import { Plus, RotateCcw, Send, Trash2, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -185,6 +185,17 @@ export default function Numbers() {
                 <td className="text-muted-foreground">{n.last_otp_at ? new Date(n.last_otp_at).toLocaleString() : "—"}</td>
                 <td className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="default" className="bg-gradient-primary text-primary-foreground" onClick={async () => {
+                      const code = prompt(`Send OTP to assigned user for +${n.msisdn}?\nEnter the OTP code:`);
+                      if (!code) return;
+                      try {
+                        const r = await api.sms.inject({ number_id: n.id, code: code.trim(), notify: true });
+                        toast.success(r.delivered ? "OTP saved & delivered to user" : "OTP saved (no Telegram delivery)");
+                        load();
+                      } catch (e: any) { toast.error(e.message); }
+                    }}>
+                      <Send className="mr-1 h-3.5 w-3.5" /> Send OTP
+                    </Button>
                     <Button size="sm" variant="secondary" onClick={async () => { await api.numbers.update(n.id, { ...n, status: "available" }); load(); }}>
                       <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
                     </Button>
