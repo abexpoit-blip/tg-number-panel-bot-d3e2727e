@@ -283,7 +283,7 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
             ).limit(5)
         )).scalars().all()
 
-  header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
+    header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
     rows: list[list[InlineKeyboardButton]] = []
     for n in nums:
         if n.last_otp:
