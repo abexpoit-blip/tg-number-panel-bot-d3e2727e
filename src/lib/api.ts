@@ -165,7 +165,14 @@ export const api = {
     reject: (id: number, note?: string) =>
       req(`/withdrawals/${id}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
   },
-  sms: { list: () => mapReq(req<any[]>("/sms"), (rows) => rows.map(fromOtp)) },
+  sms: {
+    list: () => mapReq(req<any[]>("/sms"), (rows) => rows.map(fromOtp)),
+    inject: (body: { number_id: number; code: string; raw_text?: string; notify?: boolean }) =>
+      req<{ ok: boolean; otp_id: number; delivered: boolean }>("/sms/inject", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+  },
   providers: {
     list: () => req<any[]>("/providers"),
     create: (b: any) => req("/providers", { method: "POST", body: JSON.stringify(b) }),
