@@ -93,10 +93,18 @@ async def on_start(msg: Message):
         await msg.answer("⛔ You are banned.")
         return
     name = msg.from_user.first_name or "friend"
+    inline_kb = None
+    if settings.WEBAPP_URL:
+        from aiogram.types import WebAppInfo
+        inline_kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="✨ Open Premium Menu", web_app=WebAppInfo(url=settings.WEBAPP_URL))
+        ]])
     await msg.answer(
         f"👋 <b>Welcome {name}!</b> ✊\n\n🟢 <b>Main Menu</b>\n📥 Please select an option below:",
         reply_markup=main_menu_kb(),
     )
+    if inline_kb:
+        await msg.answer("Tap below for the premium-style menu with branded icons:", reply_markup=inline_kb)
 
 
 @dp.message(F.text == "💰 Balance")
@@ -435,6 +443,35 @@ async def main():
                          "channel_post", "edited_channel_post"],
     )
 
+
+@dp.message(F.web_app_data)
+async def on_web_app_data(msg: Message):
+    """Receive service+country selection from the Mini App (premium-icon menu)."""
+    import json
+    try:
+        payload = json.loads(msg.web_app_data.data)
+        svc_id = int(payload["service_id"]); ctry_id = int(payload["country_id"])
+    except Exception:
+        await msg.answer("⚠️ Invalid selection from Mini App.")
+        return
+    u = await ensure_user(msg.from_user)
+    async with SessionLocal() as s:
+        avail = (await s.execute(
+            select(Number).where(
+                Number.service_id == svc_id, Number.country_id == ctry_id,
+                Number.enabled == True, Number.assigned_user_id.is_(None),
+            ).limit(5)
+        )).scalars().all()
+        if not avail:
+            await msg.answer("😕 No more numbers in this country.")
+            return
+        for n in avail:
+            n.assigned_user_id = u.id
+            n.assigned_at = datetime.utcnow()
+        await s.commit()
+        sv = (await s.execute(select(Service).where(Service.id == svc_id))).scalar_one()
+        ctry = (await s.execute(select(Country).where(Country.id == ctry_id))).scalar_one()
+    await render_user_numbers(msg, u.id, svc_id, ctry_id, sv, ctry, edit=False)
 
 
 if __name__ == "__main__":

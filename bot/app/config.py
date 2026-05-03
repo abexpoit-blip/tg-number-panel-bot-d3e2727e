@@ -17,6 +17,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("OTP_FEED_CHANNEL_ID", "OTP_CHANNEL_ID"),
     )
     BOT_BRAND_NAME: str = "Seven1tel Number Panel"
+    WEBAPP_URL: str = ""  # e.g. https://tg.nexus-x.site/m  — Telegram Mini App for premium-look menu
 
     @field_validator("DATABASE_URL", "BOT_TOKEN", "BOT_BRAND_NAME", mode="before")
     @classmethod
