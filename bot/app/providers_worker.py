@@ -14,6 +14,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy import select
 
 from .db import Country, Number, Otp, Provider, SessionLocal, Service, TgUser
+from .emoji import flag_emoji_html, service_emoji_html
 from .scrapers.iprn import IprnClient, iterate_provider
 
 if TYPE_CHECKING:
@@ -30,19 +31,11 @@ def _service_label(svc: Service | None) -> str:
 
 def _service_emoji_html(svc: Service | None) -> str:
     """Use Telegram premium custom emoji if configured, else unicode fallback."""
-    if not svc:
-        return "📱"
-    if svc.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
-    return svc.emoji
+    return service_emoji_html(svc)
 
 
 def _flag_emoji_html(c) -> str:
-    if not c:
-        return "🌍"
-    if getattr(c, "custom_emoji_id", None):
-        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
-    return c.flag or "🌍"
+    return flag_emoji_html(c)
 
 
 class _Dedup:

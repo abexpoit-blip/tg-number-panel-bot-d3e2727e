@@ -20,6 +20,7 @@ from sqlalchemy import select
 
 from .config import settings
 from .db import Base, Country, Number, Otp, Service, SessionLocal, TgUser, engine
+from .emoji import flag_emoji_html, service_emoji_html
 from .parser import parse_message
 from .providers_worker import providers_main
 
@@ -52,20 +53,12 @@ def copy_button(text: str, value: str) -> InlineKeyboardButton:
 
 def emoji_html(svc: Service | None) -> str:
     """Render Telegram premium custom emoji when configured, fallback to unicode."""
-    if not svc:
-        return "📱"
-    if svc.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji}</tg-emoji>'
-    return svc.emoji
+    return service_emoji_html(svc)
 
 
 def flag_html(c: Country | None) -> str:
     """Render Telegram premium flag emoji when configured, fallback to unicode flag."""
-    if not c:
-        return "🌍"
-    if c.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag}</tg-emoji>'
-    return c.flag
+    return flag_emoji_html(c)
 
 
 # ============= UI =============
@@ -153,7 +146,8 @@ async def on_get_number(msg: Message):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"{sv.emoji} {sv.name}", callback_data=f"svc:{sv.id}")] for sv in services
     ])
-    await msg.answer("🎚 <b>Select a Service:</b>", reply_markup=kb)
+    service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
+    await msg.answer(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
 
 
 @dp.callback_query(F.data.startswith("svc:"))
@@ -184,8 +178,12 @@ async def on_service_chosen(cb: CallbackQuery):
     buttons.append([InlineKeyboardButton(text="⬅️ Back To Services", callback_data="back:svc")])
     async with SessionLocal() as s:
         sv = (await s.execute(select(Service).where(Service.id == svc_id))).scalar_one()
+    country_lines = "\n".join(
+        f"{flag_html(c)} <b>{c.name}</b> (+{c.code}) - {cnt}"
+        for _cid, (c, cnt) in sorted(counts.items(), key=lambda kv: -kv[1][1])
+    )
     await cb.message.edit_text(
-        f"{sv.emoji} <b>Select country for {sv.name}:</b>",
+        f"{emoji_html(sv)} <b>Select country for {sv.name}:</b>\n\n{country_lines}",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons),
     )
     await cb.answer()
@@ -198,7 +196,8 @@ async def back_to_services(cb: CallbackQuery):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=f"{sv.emoji} {sv.name}", callback_data=f"svc:{sv.id}")] for sv in services
     ])
-    await cb.message.edit_text("🎚 <b>Select a Service:</b>", reply_markup=kb)
+    service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
+    await cb.message.edit_text(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
     await cb.answer()
 
 

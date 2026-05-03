@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth import current_admin
 from ..db import get_db
+from ..emoji import clean_custom_emoji_id
 from ..models import Country
 
 router = APIRouter()
@@ -34,7 +35,9 @@ async def list_countries(_: object = Depends(current_admin), db: AsyncSession = 
 
 @router.post("")
 async def create_country(body: CountryIn, _: object = Depends(current_admin), db: AsyncSession = Depends(get_db)):
-    c = Country(**body.model_dump())
+    data = body.model_dump()
+    data["custom_emoji_id"] = clean_custom_emoji_id(data.get("custom_emoji_id"))
+    c = Country(**data)
     db.add(c)
     await db.commit()
     await db.refresh(c)
@@ -46,7 +49,9 @@ async def update_country(cid: int, body: CountryIn, _: object = Depends(current_
     c = (await db.execute(select(Country).where(Country.id == cid))).scalar_one_or_none()
     if not c:
         raise HTTPException(404)
-    for k, v in body.model_dump().items():
+    data = body.model_dump()
+    data["custom_emoji_id"] = clean_custom_emoji_id(data.get("custom_emoji_id"))
+    for k, v in data.items():
         setattr(c, k, v)
     await db.commit()
     return _d(c)
