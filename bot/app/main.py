@@ -136,7 +136,7 @@ async def on_status(msg: Message):
         await msg.answer("📭 You have no assigned numbers yet.\nTap 🤖 <b>Get Number</b> to begin.")
         return
     lines = ["📊 <b>Your active numbers:</b>\n"]
-  for n in rows:
+    for n in rows:
         otp_part = f"  ➜ OTP: <code>{n.last_otp}</code>" if n.last_otp else "  ⏳ Waiting…"
         country_label = f"{n.country.flag} {n.country.name}" if n.country else ""
         service_label = f"{n.service.emoji} {n.service.name}" if n.service else ""
@@ -283,7 +283,7 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
             ).limit(5)
         )).scalars().all()
 
-  header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
+    header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
     rows: list[list[InlineKeyboardButton]] = []
     for n in nums:
         if n.last_otp:
