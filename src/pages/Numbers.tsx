@@ -18,21 +18,28 @@ const statusPill: Record<string, string> = {
 
 export default function Numbers() {
   const [list, setList] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 100;
   const [services, setServices] = useState<any[]>([]);
   const [countries, setCountries] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
-  const [filter, setFilter] = useState<{ service_id?: number; country_id?: number; status?: string }>({});
+  const [filter, setFilter] = useState<{ service_id?: number; country_id?: number; status?: string; prefix?: string }>({});
   const [single, setSingle] = useState({ msisdn: "", service_id: 0, country_id: 0, provider_id: 0, status: "available" });
   const [bulk, setBulk] = useState({ msisdns: "", service_id: 0, country_id: 0, provider_id: 0 });
 
-  const load = () => api.numbers.list(filter).then(setList).catch((e) => toast.error(e.message));
+  const load = () => api.numbers.list({ ...filter, limit: PAGE_SIZE, offset: page * PAGE_SIZE })
+    .then((r: any) => { setList(r.items || []); setTotal(r.total || 0); })
+    .catch((e) => toast.error(e.message));
   useEffect(() => {
     api.services.list().then(setServices);
     api.countries.list().then(setCountries);
     api.providers.list().then(setProviders).catch(() => setProviders([]));
   }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, [JSON.stringify(filter)]);
+  useEffect(() => { load(); }, [JSON.stringify(filter), page]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0); }, [JSON.stringify(filter)]);
 
   const addOne = async () => {
     if (!single.msisdn || !single.service_id || !single.country_id) return toast.error("Fill all fields");
@@ -47,6 +54,24 @@ export default function Numbers() {
       const r = await api.numbers.bulk({ msisdns: arr, service_id: bulk.service_id, country_id: bulk.country_id, provider_id: bulk.provider_id || null });
       toast.success(`Inserted ${r.inserted} of ${r.submitted}`);
       setBulk({ ...bulk, msisdns: "" }); load();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const deleteRange = async () => {
+    if (!filter.service_id && !filter.country_id && !filter.status && !filter.prefix) {
+      return toast.error("Pick at least one filter (service/country/status/prefix) before deleting a range.");
+    }
+    const desc = [
+      filter.service_id && `service=${services.find(s => s.id === filter.service_id)?.name}`,
+      filter.country_id && `country=${countries.find(c => c.id === filter.country_id)?.name}`,
+      filter.status && `status=${filter.status}`,
+      filter.prefix && `prefix=${filter.prefix}`,
+    ].filter(Boolean).join(", ");
+    if (!confirm(`Delete ALL numbers matching: ${desc}?\nThis cannot be undone.`)) return;
+    try {
+      const r = await api.numbers.bulkDelete(filter);
+      toast.success(`Deleted ${r.deleted} numbers`);
+      setPage(0); load();
     } catch (e: any) { toast.error(e.message); }
   };
 
