@@ -263,14 +263,14 @@ async def render_user_numbers(target: Message, user_pk: int, svc_id: int, ctry_i
             ).limit(5)
         )).scalars().all()
 
-    header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
+  header = f"{flag_html(ctry)} {emoji_html(sv)} <b>{ctry.name} Number:</b>\n⏳ Waiting for OTP…\n"
     rows: list[list[InlineKeyboardButton]] = []
     for n in nums:
         if n.last_otp:
-            label = f"{sv.emoji} +{n.phone}  ➜  {n.last_otp}"
+            label = f"{ctry.flag} {sv.emoji}  +{n.phone}  ➜  {n.last_otp}"
             copy = f"+{n.phone}|{n.last_otp}"
         else:
-            label = f"{sv.emoji} 📋 +{n.phone}"
+            label = f"{ctry.flag} {sv.emoji}  +{n.phone}"
             copy = f"+{n.phone}"
         rows.append([copy_button(label, copy)])
     rows.append([InlineKeyboardButton(text="🔄 Change Number", callback_data=f"chg:{svc_id}:{ctry_id}")])
