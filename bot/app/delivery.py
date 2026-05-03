@@ -16,26 +16,11 @@ import aiohttp
 
 from .config import settings
 from .db import Country, Service, get_setting
+from .emoji import flag_emoji_html, service_emoji_html
 
 log = logging.getLogger("bot.delivery")
 
 API_BASE = "https://api.telegram.org"
-
-
-def _emoji_html(svc: Service | None) -> str:
-    if not svc:
-        return "📱"
-    if svc.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{svc.custom_emoji_id}">{svc.emoji or "📱"}</tg-emoji>'
-    return svc.emoji or "📱"
-
-
-def _flag_html(c: Country | None) -> str:
-    if not c:
-        return "🌍"
-    if c.custom_emoji_id:
-        return f'<tg-emoji emoji-id="{c.custom_emoji_id}">{c.flag or "🌍"}</tg-emoji>'
-    return c.flag or "🌍"
 
 
 async def _build_keyboard(code: str) -> list[list[dict[str, Any]]]:
@@ -91,8 +76,8 @@ async def send_otp_message(
         log.error("BOT_TOKEN not configured; cannot deliver OTP")
         return False
 
-    flag = _flag_html(country)
-    emoji = _emoji_html(service)
+    flag = flag_emoji_html(country)
+    emoji = service_emoji_html(service)
     iso = (country.iso or "").upper() if country else ""
     hashtag = f" #{iso}" if iso else ""
 
