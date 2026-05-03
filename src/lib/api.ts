@@ -129,7 +129,11 @@ export const api = {
         if (v !== undefined && v !== null && v !== "") clean[k] = String(v);
       });
       const p = new URLSearchParams(clean).toString();
-      return mapReq(req<any[]>(`/numbers${p ? "?" + p : ""}`), (rows) => rows.map(fromNumber));
+      return mapReq(req<any>(`/numbers${p ? "?" + p : ""}`), (r) => {
+        // backend may return either array (legacy) or {items,total}
+        if (Array.isArray(r)) return { items: r.map(fromNumber), total: r.length };
+        return { items: (r.items || []).map(fromNumber), total: r.total ?? 0, limit: r.limit, offset: r.offset };
+      });
     },
     create: (b: any) => req("/numbers", { method: "POST", body: JSON.stringify(toNumber(b)) }),
     bulk: (b: any) => req<{ inserted: number; submitted: number }>("/numbers/bulk", {
@@ -143,6 +147,8 @@ export const api = {
     }),
     update: (id: number, b: any) => req(`/numbers/${id}`, { method: "PUT", body: JSON.stringify(toNumber(b)) }),
     remove: (id: number) => req(`/numbers/${id}`, { method: "DELETE" }),
+    bulkDelete: (filters: Record<string, any>) =>
+      req<{ deleted: number }>(`/numbers/bulk-delete`, { method: "POST", body: JSON.stringify(filters) }),
   },
   users: {
     list: (q?: string) => req<any[]>(`/users${q ? "?q=" + encodeURIComponent(q) : ""}`),
