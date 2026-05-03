@@ -136,7 +136,7 @@ async def on_status(msg: Message):
         await msg.answer("📭 You have no assigned numbers yet.\nTap 🤖 <b>Get Number</b> to begin.")
         return
     lines = ["📊 <b>Your active numbers:</b>\n"]
-  for n in rows:
+    for n in rows:
         otp_part = f"  ➜ OTP: <code>{n.last_otp}</code>" if n.last_otp else "  ⏳ Waiting…"
         country_label = f"{n.country.flag} {n.country.name}" if n.country else ""
         service_label = f"{n.service.emoji} {n.service.name}" if n.service else ""
