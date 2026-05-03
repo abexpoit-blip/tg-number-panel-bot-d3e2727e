@@ -153,6 +153,15 @@ export default function Numbers() {
               <SelectItem value="disabled">Disabled</SelectItem>
             </SelectContent>
           </Select>
+          <Input
+            placeholder="Prefix e.g. 21628"
+            className="w-44"
+            value={filter.prefix ?? ""}
+            onChange={(e) => setFilter({ ...filter, prefix: e.target.value || undefined })}
+          />
+          <Button variant="destructive" onClick={deleteRange} title="Delete every number matching the current filters">
+            <Trash2 className="mr-1 h-4 w-4" /> Delete range ({total})
+          </Button>
         </div>
         <div className="flex gap-2 text-xs">
           <span className="pill-green">{counts.available || 0} available</span>
