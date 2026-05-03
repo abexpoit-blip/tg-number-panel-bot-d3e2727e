@@ -31,6 +31,20 @@ bot: Bot | None = None
 dp = Dispatcher()
 
 
+@dp.errors()
+async def on_error(event):
+    """Catch-all so a single handler crash never silently kills the bot."""
+    log.exception("Handler crashed: %s", event.exception)
+    try:
+        upd = event.update
+        msg = getattr(upd, "message", None) or getattr(getattr(upd, "callback_query", None), "message", None)
+        if msg:
+            await msg.answer("⚠️ Something went wrong. Please try again.")
+    except Exception:
+        pass
+    return True
+
+
 async def init_db() -> None:
     from sqlalchemy import text
     async with engine.begin() as conn:
