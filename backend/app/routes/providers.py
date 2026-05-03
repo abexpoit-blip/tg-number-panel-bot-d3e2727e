@@ -100,3 +100,33 @@ async def clear_cookies(pid: int, _: object = Depends(current_admin), db: AsyncS
     p.last_error = None
     await db.commit()
     return {"ok": True}
+
+
+@router.post("/{pid}/test")
+async def test_provider(pid: int, _: object = Depends(current_admin), db: AsyncSession = Depends(get_db)):
+    """Force a fresh login + one fetch so the admin can confirm the provider works."""
+    from datetime import datetime
+    # Import inside the function so the api container doesn't need bot deps at import time
+    try:
+        from app_scrapers.iprn import IprnClient  # type: ignore
+    except Exception:
+        # Fallback: backend ships its own copy if bot module isn't on PYTHONPATH
+        from ..scrapers_iprn import IprnClient  # type: ignore
+
+    p = (await db.execute(select(Provider).where(Provider.id == pid))).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404)
+    client = IprnClient(p.base_url, p.username, p.password, p.currency, "")
+    try:
+        await client.login()
+        rows = await client.fetch_sms()
+        p.cookies_json = client.cookies_json()
+        p.last_login_at = datetime.utcnow()
+        p.last_poll_at = datetime.utcnow()
+        p.last_error = None
+        await db.commit()
+        return {"ok": True, "rows_seen": len(rows), "cookies_saved": True}
+    except Exception as e:
+        p.last_error = f"test: {type(e).__name__}: {e}"[:500]
+        await db.commit()
+        raise HTTPException(400, detail=str(e))
