@@ -67,7 +67,7 @@ export default function Numbers() {
             <Input placeholder="393406647354" value={single.msisdn} onChange={(e) => setSingle({ ...single, msisdn: e.target.value })} />
             <Select value={String(single.service_id)} onValueChange={(v) => setSingle({ ...single, service_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
-              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(single.country_id)} onValueChange={(v) => setSingle({ ...single, country_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
@@ -89,7 +89,7 @@ export default function Numbers() {
           <div className="grid grid-cols-3 gap-3">
             <Select value={String(bulk.service_id)} onValueChange={(v) => setBulk({ ...bulk, service_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
-              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(bulk.country_id)} onValueChange={(v) => setBulk({ ...bulk, country_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
@@ -112,7 +112,7 @@ export default function Numbers() {
         <div className="flex flex-wrap gap-2">
           <Select value={filter.service_id ? String(filter.service_id) : "all"} onValueChange={(v) => setFilter({ ...filter, service_id: v === "all" ? undefined : +v })}>
             <SelectTrigger className="w-44"><SelectValue placeholder="All services" /></SelectTrigger>
-            <SelectContent><SelectItem value="all">All services</SelectItem>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">All services</SelectItem>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
           </Select>
           <Select value={filter.country_id ? String(filter.country_id) : "all"} onValueChange={(v) => setFilter({ ...filter, country_id: v === "all" ? undefined : +v })}>
             <SelectTrigger className="w-44"><SelectValue placeholder="All countries" /></SelectTrigger>
