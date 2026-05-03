@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import EmojiIdField from "@/components/EmojiIdField";
+import ServiceBadge from "@/components/ServiceBadge";
 import { toast } from "sonner";
 
 interface Service { id: number; code: string; name: string; emoji: string; custom_emoji_id?: string | null; enabled: boolean; sort_order: number }
@@ -54,11 +55,12 @@ export default function Services() {
 
       <div className="glass-card overflow-hidden p-0">
         <table className="data-table">
-          <thead><tr><th>ID</th><th>Code</th><th>Name</th><th>Emoji</th><th>Premium ID</th><th>Sort</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>ID</th><th>Preview</th><th>Code</th><th>Name</th><th>Emoji</th><th>Premium ID</th><th>Sort</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {list.map((s) => (
               <tr key={s.id}>
                 <td className="text-muted-foreground">#{s.id}</td>
+                <td><ServiceBadge service={s} size="md" /></td>
                 <td><Input value={s.code} onChange={(e) => patch(s.id, "code", e.target.value)} className="h-8 w-24" /></td>
                 <td><Input value={s.name} onChange={(e) => patch(s.id, "name", e.target.value)} className="h-8 w-44" /></td>
                 <td><Input value={s.emoji} onChange={(e) => patch(s.id, "emoji", e.target.value)} className="h-8 w-16" /></td>
@@ -79,7 +81,7 @@ export default function Services() {
                 </td>
               </tr>
             ))}
-            {list.length === 0 && (<tr><td colSpan={8} className="py-10 text-center text-muted-foreground">No services yet.</td></tr>)}
+            {list.length === 0 && (<tr><td colSpan={9} className="py-10 text-center text-muted-foreground">No services yet.</td></tr>)}
           </tbody>
         </table>
       </div>

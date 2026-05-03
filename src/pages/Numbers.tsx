@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ServiceBadge from "@/components/ServiceBadge";
 import { toast } from "sonner";
 
 const statusPill: Record<string, string> = {
@@ -66,7 +67,7 @@ export default function Numbers() {
             <Input placeholder="393406647354" value={single.msisdn} onChange={(e) => setSingle({ ...single, msisdn: e.target.value })} />
             <Select value={String(single.service_id)} onValueChange={(v) => setSingle({ ...single, service_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
-              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(single.country_id)} onValueChange={(v) => setSingle({ ...single, country_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
@@ -88,7 +89,7 @@ export default function Numbers() {
           <div className="grid grid-cols-3 gap-3">
             <Select value={String(bulk.service_id)} onValueChange={(v) => setBulk({ ...bulk, service_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
-              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+              <SelectContent>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
             </Select>
             <Select value={String(bulk.country_id)} onValueChange={(v) => setBulk({ ...bulk, country_id: +v })}>
               <SelectTrigger><SelectValue placeholder="Country" /></SelectTrigger>
@@ -111,7 +112,7 @@ export default function Numbers() {
         <div className="flex flex-wrap gap-2">
           <Select value={filter.service_id ? String(filter.service_id) : "all"} onValueChange={(v) => setFilter({ ...filter, service_id: v === "all" ? undefined : +v })}>
             <SelectTrigger className="w-44"><SelectValue placeholder="All services" /></SelectTrigger>
-            <SelectContent><SelectItem value="all">All services</SelectItem>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}>{s.emoji} {s.name}</SelectItem>)}</SelectContent>
+            <SelectContent><SelectItem value="all">All services</SelectItem>{services.map((s) => <SelectItem key={s.id} value={String(s.id)}><ServiceBadge service={s} /></SelectItem>)}</SelectContent>
           </Select>
           <Select value={filter.country_id ? String(filter.country_id) : "all"} onValueChange={(v) => setFilter({ ...filter, country_id: v === "all" ? undefined : +v })}>
             <SelectTrigger className="w-44"><SelectValue placeholder="All countries" /></SelectTrigger>
@@ -144,7 +145,7 @@ export default function Numbers() {
               <tr key={n.id}>
                 <td className="text-muted-foreground">#{n.id}</td>
                 <td><span className="code-pill">+{n.msisdn}</span></td>
-                <td>{n.service_emoji} {n.service_name}</td>
+                <td><ServiceBadge service={{ name: n.service_name, code: n.service_keyword }} /></td>
                 <td><span className="mr-1 text-lg">{n.country_flag}</span>{n.country_name}</td>
                 <td><span className={statusPill[n.status] || "pill-neutral"}>{n.status}</span></td>
                 <td className="text-muted-foreground">{n.last_otp_at ? new Date(n.last_otp_at).toLocaleString() : "—"}</td>
