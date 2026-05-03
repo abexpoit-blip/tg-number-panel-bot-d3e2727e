@@ -199,6 +199,14 @@ export default function Numbers() {
           </tbody>
         </table>
       </div>
+
+      <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+        <span>Showing {list.length === 0 ? 0 : page * PAGE_SIZE + 1}–{page * PAGE_SIZE + list.length} of {total}</span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>Prev</Button>
+          <Button size="sm" variant="secondary" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage((p) => p + 1)}>Next</Button>
+        </div>
+      </div>
     </>
   );
 }
