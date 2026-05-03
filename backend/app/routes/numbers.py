@@ -59,17 +59,7 @@ def _d(n: Number):
     }
 
 
-@router.get("")
-async def list_numbers(
-    service_id: int | None = None,
-    country_id: int | None = None,
-    assigned: str | None = None,
-    status: str | None = None,
-    q: str | None = None,
-    _: object = Depends(current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    stmt = select(Number)
+def _apply_filters(stmt, *, service_id, country_id, assigned, status, q, prefix):
     if service_id:
         stmt = stmt.where(Number.service_id == service_id)
     if country_id:
@@ -89,8 +79,63 @@ async def list_numbers(
         stmt = stmt.where(Number.enabled == True, Number.last_otp.is_(None), Number.assigned_user_id.is_not(None))
     if q:
         stmt = stmt.where(Number.phone.ilike(f"%{q}%"))
-    rows = (await db.execute(stmt.order_by(Number.id.desc()).limit(500))).scalars().all()
-    return [_d(n) for n in rows]
+    if prefix:
+        cleaned = re.sub(r"\D", "", prefix)
+        if cleaned:
+            stmt = stmt.where(Number.phone.like(f"{cleaned}%"))
+    return stmt
+
+
+@router.get("")
+async def list_numbers(
+    service_id: int | None = None,
+    country_id: int | None = None,
+    assigned: str | None = None,
+    status: str | None = None,
+    q: str | None = None,
+    prefix: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+    _: object = Depends(current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import func
+    base = _apply_filters(select(Number), service_id=service_id, country_id=country_id,
+                          assigned=assigned, status=status, q=q, prefix=prefix)
+    total = (await db.execute(_apply_filters(select(func.count(Number.id)), service_id=service_id,
+             country_id=country_id, assigned=assigned, status=status, q=q, prefix=prefix))).scalar() or 0
+    limit = max(1, min(int(limit or 100), 1000))
+    offset = max(0, int(offset or 0))
+    rows = (await db.execute(base.order_by(Number.id.desc()).limit(limit).offset(offset))).scalars().all()
+    items = [_d(n) for n in rows]
+    return {"items": items, "total": int(total), "limit": limit, "offset": offset}
+
+
+@router.post("/bulk-delete")
+async def bulk_delete(
+    body: dict,
+    _: object = Depends(current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import delete as sql_delete
+    stmt = _apply_filters(
+        select(Number.id),
+        service_id=body.get("service_id"),
+        country_id=body.get("country_id"),
+        assigned=body.get("assigned"),
+        status=body.get("status"),
+        q=body.get("q"),
+        prefix=body.get("prefix"),
+    )
+    # safety: require at least one filter to avoid wiping the whole table
+    if not any(body.get(k) for k in ("service_id", "country_id", "status", "q", "prefix")):
+        raise HTTPException(400, "Provide at least one filter (service/country/status/prefix/q).")
+    ids = [row[0] for row in (await db.execute(stmt)).all()]
+    if not ids:
+        return {"deleted": 0}
+    await db.execute(sql_delete(Number).where(Number.id.in_(ids)))
+    await db.commit()
+    return {"deleted": len(ids)}
 
 
 @router.post("")
