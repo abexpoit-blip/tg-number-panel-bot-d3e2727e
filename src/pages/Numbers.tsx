@@ -145,7 +145,7 @@ export default function Numbers() {
               <tr key={n.id}>
                 <td className="text-muted-foreground">#{n.id}</td>
                 <td><span className="code-pill">+{n.msisdn}</span></td>
-                <td>{n.service_emoji} {n.service_name}</td>
+                <td><ServiceBadge service={{ name: n.service_name, code: n.service_code }} /></td>
                 <td><span className="mr-1 text-lg">{n.country_flag}</span>{n.country_name}</td>
                 <td><span className={statusPill[n.status] || "pill-neutral"}>{n.status}</span></td>
                 <td className="text-muted-foreground">{n.last_otp_at ? new Date(n.last_otp_at).toLocaleString() : "—"}</td>
