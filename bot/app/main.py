@@ -93,10 +93,18 @@ async def on_start(msg: Message):
         await msg.answer("⛔ You are banned.")
         return
     name = msg.from_user.first_name or "friend"
+    inline_kb = None
+    if settings.WEBAPP_URL:
+        from aiogram.types import WebAppInfo
+        inline_kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="✨ Open Premium Menu", web_app=WebAppInfo(url=settings.WEBAPP_URL))
+        ]])
     await msg.answer(
         f"👋 <b>Welcome {name}!</b> ✊\n\n🟢 <b>Main Menu</b>\n📥 Please select an option below:",
         reply_markup=main_menu_kb(),
     )
+    if inline_kb:
+        await msg.answer("Tap below for the premium-style menu with branded icons:", reply_markup=inline_kb)
 
 
 @dp.message(F.text == "💰 Balance")
