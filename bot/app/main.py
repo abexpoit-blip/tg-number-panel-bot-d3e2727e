@@ -182,9 +182,11 @@ async def on_get_number(msg: Message):
     if not services:
         await msg.answer("No services available right now.")
         return
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"   {sv.emoji}   {sv.name.upper()}   ", callback_data=f"svc:{sv.id}")] for sv in services
-    ])
+    def _svc_btn(sv: Service) -> InlineKeyboardButton:
+        emo = (sv.emoji or "📱").strip()
+        nm = (sv.name or "Service").strip().upper()
+        return InlineKeyboardButton(text=f"   {emo}   {nm}   ", callback_data=f"svc:{sv.id}")
+    kb = InlineKeyboardMarkup(inline_keyboard=[[_svc_btn(sv)] for sv in services])
     service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
     await msg.answer(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
 
@@ -232,9 +234,11 @@ async def on_service_chosen(cb: CallbackQuery):
 async def back_to_services(cb: CallbackQuery):
     async with SessionLocal() as s:
         services = (await s.execute(select(Service).where(Service.enabled == True).order_by(Service.sort_order, Service.id))).scalars().all()
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"   {sv.emoji}   {sv.name.upper()}   ", callback_data=f"svc:{sv.id}")] for sv in services
-    ])
+    def _svc_btn(sv: Service) -> InlineKeyboardButton:
+        emo = (sv.emoji or "📱").strip()
+        nm = (sv.name or "Service").strip().upper()
+        return InlineKeyboardButton(text=f"   {emo}   {nm}   ", callback_data=f"svc:{sv.id}")
+    kb = InlineKeyboardMarkup(inline_keyboard=[[_svc_btn(sv)] for sv in services])
     service_lines = "\n".join(f"{emoji_html(sv)} <b>{sv.name}</b>" for sv in services)
     await cb.message.edit_text(f"🎚 <b>Select a Service:</b>\n\n{service_lines}", reply_markup=kb)
     await cb.answer()
