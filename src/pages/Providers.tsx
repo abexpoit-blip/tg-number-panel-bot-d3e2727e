@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, Trash2, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Save, Trash2, KeyRound, CheckCircle2, AlertCircle, PlugZap } from "lucide-react";
 import { api } from "@/lib/api";
 import PageHeader from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,17 @@ export default function Providers() {
   const clearCookies = async (id: number) => {
     try { await api.providers.clearCookies(id); toast.success("Cookies cleared, will re-login on next poll"); load(); }
     catch (e: any) { toast.error(e.message); }
+  };
+  const testLogin = async (id: number) => {
+    const tid = toast.loading("Logging in & fetching SMS…");
+    try {
+      const r = await api.providers.test(id);
+      toast.success(`Login OK — ${r.rows_seen} SMS rows fetched, cookies saved`, { id: tid });
+      load();
+    } catch (e: any) {
+      toast.error(`Test failed: ${e.message}`, { id: tid });
+      load();
+    }
   };
   const patch = (id: number, k: keyof Provider, v: any) =>
     setList(list.map((x) => (x.id === id ? { ...x, [k]: v } : x)));
@@ -141,11 +152,14 @@ export default function Providers() {
                 <td><Switch checked={p.enabled} onCheckedChange={(v) => patch(p.id, "enabled", v)} /></td>
                 <td className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => save(p)}><Save className="h-3.5 w-3.5" /></Button>
-                    <Button size="sm" variant="secondary" onClick={() => clearCookies(p.id)} title="Force re-login">
+                    <Button size="sm" variant="secondary" onClick={() => save(p)} title="Save"><Save className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="secondary" onClick={() => testLogin(p.id)} title="Test login & fetch SMS now">
+                      <PlugZap className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => clearCookies(p.id)} title="Force re-login on next poll">
                       <KeyRound className="h-3.5 w-3.5" />
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => del(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <Button size="sm" variant="destructive" onClick={() => del(p.id)} title="Delete"><Trash2 className="h-3.5 w-3.5" /></Button>
                   </div>
                 </td>
               </tr>

@@ -164,5 +164,6 @@ export const api = {
     update: (id: number, b: any) => req(`/providers/${id}`, { method: "PUT", body: JSON.stringify(b) }),
     remove: (id: number) => req(`/providers/${id}`, { method: "DELETE" }),
     clearCookies: (id: number) => req(`/providers/${id}/clear-cookies`, { method: "POST" }),
+    test: (id: number) => req<{ ok: boolean; rows_seen: number; cookies_saved: boolean }>(`/providers/${id}/test`, { method: "POST" }),
   },
 };
